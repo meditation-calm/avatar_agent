@@ -1,0 +1,48 @@
+default:
+  logger:
+    log_level: "INFO"
+  service:
+    host: "0.0.0.0"
+    port: 8282
+    cert_file: "ssl_certs/localhost.crt"
+    cert_key: "ssl_certs/localhost.key"
+  chat_engine:
+    model_root: "models"
+    handler_search_path:
+      - "src/handlers"
+    handler_configs:
+      RtcClient:
+        module: client/client_handler_rtc
+        turn_config:
+          turn_provider: "turn_server"
+          urls: [ "turn:121.40.166.120:3478" ]
+          username: "szr"
+          credential: "szr123"
+      SileroVad:
+        module: vad/silero/vad_handler_silero
+        speaking_threshold: 0.5
+        start_delay: 2048
+        end_delay: 5000
+        buffer_look_back: 5000
+        speech_padding: 512
+      SenseVoice:
+        module: asr/sensevoice/asr_handler_sensevoice
+        model_name: "iic/SenseVoiceSmall"
+        language: "auto"
+        use_itn: False
+        batch_size_s: 10
+      LLMOpenAI:
+        module: llm/openai/llm_handler_openai
+        model_name: "qwen-plus"
+        system_prompt: "请你扮演一个 AI 助手，用简短的对话来回答用户的问题，并在对话内容中加入合适的标点符号，不需要加入标点符号相关的内容"
+        api_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_key: "sk-e13e4e1343d6460bbd5fca38ec1d785d"
+        history_length: 20
+      CosyVoice:
+        module: tts/cosyvoice/tts_handler_cosyvoice
+        model_name: "iic/CosyVoice-300M-SFT"
+        spk_id: "中文女"
+        # ref_audio_path: "open-video-chat/src/third_party/CosyVoice/asset/zero_shot_prompt.wav" #use zero_shot model
+        # ref_audio_text: "希望你以后能够做的比我还好呦。"
+        sample_rate: 24000
+        process_num: 2
