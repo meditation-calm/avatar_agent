@@ -31,6 +31,9 @@ Avatar Agent 是一个基于AI的实时音视频交互系统，集成了语音�
 ```bash
 git clone <仓库地址>
 cd avatar_agent
+
+# 更新子模块
+git submodule update --init --recursive --depth 1
 ```
 
 ### 2. 创建虚拟环境
