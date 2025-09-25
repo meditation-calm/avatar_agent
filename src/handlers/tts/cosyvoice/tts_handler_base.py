@@ -4,6 +4,7 @@ import time
 import uuid
 from collections import deque
 from dataclasses import dataclass, field
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -33,7 +34,7 @@ class HandlerTask:
 class TTSContext(HandlerContext):
     def __init__(self, session_id: str):
         super().__init__(session_id)
-        self.config = None
+        self.config: Optional[TTSConfig] = None
         self.input_text = ''
         self.dump_audio = False
         self.audio_dump_file = None

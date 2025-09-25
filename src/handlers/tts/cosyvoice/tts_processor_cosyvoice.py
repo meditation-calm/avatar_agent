@@ -29,13 +29,13 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
         self.output_queue = output_queue
         self.dump_audio = False
         self.audio_dump_file = None
-        if self.dump_audio:
-            dump_file_path = os.path.join(DirectoryInfo.get_project_dir(), "cache", "dump_avatar_audio.pcm")
-            self.audio_dump_file = open(dump_file_path, "wb")
 
     def run(self):
         logger.remove()
         logger.add(sys.stdout, level='INFO')
+        if self.dump_audio:
+            dump_file_path = os.path.join(DirectoryInfo.get_project_dir(), "cache", "dump_avatar_audio.pcm")
+            self.audio_dump_file = open(dump_file_path, "wb")
         logger.info(f"Start CosyVoice TTS processor with model {self.model_name}")
         # use local model
 
@@ -59,9 +59,9 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
             init_text = '欢迎来到中国2025'
             if self.ref_audio_buffer is not None:
                 response = self.model.inference_zero_shot(
-                    init_text, self.ref_audio_text, self.ref_audio_buffer, True)
+                    init_text, self.ref_audio_text, self.ref_audio_buffer, True, False, self.speed)
             elif self.spk_id:
-                response = self.model.inference_sft(init_text, self.spk_id)
+                response = self.model.inference_sft(init_text, self.spk_id, False, self.speed)
             else:
                 logger.error('Cosyvoice need a ref_audio or spk_id')
                 return
@@ -94,9 +94,9 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
             if self.model:
                 if self.ref_audio_buffer is not None:
                     response = self.model.inference_zero_shot(
-                        input_text, self.ref_audio_text, self.ref_audio_buffer, stream=True)
+                        input_text, self.ref_audio_text, self.ref_audio_buffer, True, True, self.speed)
                 elif self.spk_id:
-                    response = self.model.inference_sft(input_text, self.spk_id, stream=True)
+                    response = self.model.inference_sft(input_text, self.spk_id, True, self.speed)
                 else:
                     logger.error('Cosyvoice need a ref_audio or spk_id')
                     return

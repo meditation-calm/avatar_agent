@@ -47,8 +47,9 @@ class HandlerTTS(HandlerBase, ABC):
 
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
+        context = cast(TTSContext, context)
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("avatar_audio", 1, self.sample_rate))
+        definition.add_entry(DataBundleEntry.create_audio_entry("avatar_audio", 1, context.config.sample_rate))
         inputs = {
             ChatDataType.AVATAR_TEXT: HandlerDataInfo(
                 type=ChatDataType.AVATAR_TEXT,
@@ -80,7 +81,6 @@ class HandlerTTS(HandlerBase, ABC):
         def consumer(task_queue_map: dict[str, deque], tts_output_queue: Queue):
             while True:
                 logger.debug(f"tts output {len(task_queue_map.keys()), tts_output_queue.qsize()}")
-                output = None
                 try:
                     output = tts_output_queue.get(timeout=1)
                 except Exception as e:
@@ -110,7 +110,9 @@ class HandlerTTS(HandlerBase, ABC):
     def create_context(self, session_context, handler_config=None):
         if not isinstance(handler_config, TTSConfig):
             handler_config = TTSConfig()
-        return TTSContext(session_context.session_info.session_id)
+        context = TTSContext(session_context.session_info.session_id)
+        context.config = handler_config
+        return context
 
     def start_context(self, session_context, context: HandlerContext):
         context = cast(TTSContext, context)
@@ -142,12 +144,12 @@ class HandlerTTS(HandlerBase, ABC):
                 except Exception as e:
                     logger.debug(e)
   
-        context.task_consume_thread = threading.Thread(target=task_consumer, args=[context.task_queue, context.submit_data])
-        context.task_consume_thread.start()
+        context.task_consumer_thread = threading.Thread(target=task_consumer, args=[context.task_queue, context.submit_data])
+        context.task_consumer_thread.start()
         self.task_queue_map[context.session_id] = context.task_queue
 
     @staticmethod
-    def filter_text(self, text):
+    def filter_text(text):
         pattern = r"[^a-zA-Z0-9\u4e00-\u9fff,.\~!?，。！？ ]"  # 匹配不在范围内的字符
         filtered_text = re.sub(pattern, "", text)
         return filtered_text
@@ -182,7 +184,6 @@ class HandlerTTS(HandlerBase, ABC):
                         "text": sentence + '。',
                         "key": task.id,
                         "session_id": context.session_id
-                    
                     }
                     self.tts_input_queue.put(tts_info)
                     context.task_queue.append(task)

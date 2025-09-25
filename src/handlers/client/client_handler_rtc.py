@@ -159,20 +159,24 @@ class ClientHandlerRtc(ClientHandlerBase):
 
     def create_handler_detail(self, _session_context, _handler_context):
         inputs = {
-            # ChatDataType.AVATAR_AUDIO: HandlerDataInfo(
-            #     type=ChatDataType.AVATAR_AUDIO
-            # ),
+            ChatDataType.HUMAN_TEXT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_TEXT
+            ),
+            ChatDataType.AVATAR_TEXT: HandlerDataInfo(
+                type=ChatDataType.AVATAR_TEXT
+            ),
+            ChatDataType.AVATAR_AUDIO: HandlerDataInfo(
+                type=ChatDataType.AVATAR_AUDIO
+            ),
             # ChatDataType.AVATAR_VIDEO: HandlerDataInfo(
             #     type=ChatDataType.AVATAR_VIDEO
             # ),
-            # ChatDataType.AVATAR_TEXT: HandlerDataInfo(
-            #     type=ChatDataType.AVATAR_TEXT
-            # ),
-            # ChatDataType.HUMAN_TEXT: HandlerDataInfo(
-            #     type=ChatDataType.HUMAN_TEXT
-            # ),
         }
         outputs = {
+            ChatDataType.HUMAN_TEXT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_TEXT,
+                definition=self.output_bundle_definitions[EngineChannelType.TEXT]
+            ),
             ChatDataType.MIC_AUDIO: HandlerDataInfo(
                 type=ChatDataType.MIC_AUDIO,
                 definition=self.output_bundle_definitions[EngineChannelType.AUDIO]
@@ -180,10 +184,6 @@ class ClientHandlerRtc(ClientHandlerBase):
             ChatDataType.CAMERA_VIDEO: HandlerDataInfo(
                 type=ChatDataType.CAMERA_VIDEO,
                 definition=self.output_bundle_definitions[EngineChannelType.VIDEO]
-            ),
-            ChatDataType.HUMAN_TEXT: HandlerDataInfo(
-                type=ChatDataType.HUMAN_TEXT,
-                definition=self.output_bundle_definitions[EngineChannelType.TEXT]
             ),
         }
         return HandlerDetail(
