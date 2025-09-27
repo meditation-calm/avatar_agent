@@ -1,3 +1,5 @@
+import wave
+
 from torch.multiprocessing import Queue
 import torch.multiprocessing as mp
 
@@ -104,7 +106,8 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
             for tts_speech in response:
                 tts_audio = tts_speech['tts_speech'].numpy()
                 logger.debug(f'tts sample rate {self.model.sample_rate}')
-                tts_audio = tts_audio  # librosa.resample(tts_audio, orig_sr=self.model.sample_rate, target_sr=24000)
+                tts_audio = tts_audio
+                # librosa.resample(tts_audio, orig_sr=self.model.sample_rate, target_sr=24000)
                 # tts_audio = torchaudio.transforms.Resample(orig_freq=22050, new_freq=24000)(tts_audio)
                 if self.dump_audio:
                     dump_audio = tts_audio

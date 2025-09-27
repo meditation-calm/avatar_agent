@@ -24,7 +24,7 @@ from src.handlers.tts.cosyvoice.tts_handler_base import TTSConfig, TTSContext, H
 from src.handlers.tts.cosyvoice.tts_processor_cosyvoice import TTSCosyVoiceProcessor
 
 
-class HandlerTTS(HandlerBase, ABC):
+class TTSHandler(HandlerBase, ABC):
     def __init__(self):
         super().__init__()
         self.mp = Manager()
@@ -148,8 +148,7 @@ class HandlerTTS(HandlerBase, ABC):
         context.task_consumer_thread.start()
         self.task_queue_map[context.session_id] = context.task_queue
 
-    @staticmethod
-    def filter_text(text):
+    def filter_text(self, text):
         pattern = r"[^a-zA-Z0-9\u4e00-\u9fff,.\~!?，。！？ ]"  # 匹配不在范围内的字符
         filtered_text = re.sub(pattern, "", text)
         return filtered_text

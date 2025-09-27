@@ -39,11 +39,19 @@ default:
         api_key: "sk-e13e4e1343d6460bbd5fca38ec1d785d"
         history_length: 20
       CosyVoice:
-        module: tts/cosyvoice/tts_handler_cosyvoice
-        model_name: "iic/CosyVoice-300M-SFT"
-        # ref_audio_path: "open-video-chat/src/third_party/CosyVoice/asset/zero_shot_prompt.wav" #use zero_shot model
-        # ref_audio_text: "希望你以后能够做的比我还好呦。"
-        spk_id: "中文女"
+#        module: tts/cosyvoice/tts_handler_cosyvoice
+#        model_name: "iic/CosyVoice-300M-SFT"
+#        # ref_audio_path: "CosyVoice/asset/zero_shot_prompt.wav"
+#        # ref_audio_text: "希望你以后能够做的比我还好呦。"
+#        spk_id: "中文女"
+#        speed: 0.8
+#        sample_rate: 24000
+#        process_num: 1
+        module: tts/bailian/tts_handler_cosyvoice
+        model_name: "cosyvoice-v1"
+        api_key: "sk-e13e4e1343d6460bbd5fca38ec1d785d"
+        voice: "longhua"
+        volume: 50
         speed: 1.0
-        sample_rate: 24000
-        process_num: 1
+        pitch_rate: 1.0
+

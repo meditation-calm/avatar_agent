@@ -18,7 +18,7 @@ from src.engine_utils.general_slicer import SliceContext, slice_data
 from src.handlers.vad.silero.vad_handler_base import VADConfig, VADContext
 
 
-class HandlerAudioVAD(HandlerBase, ABC):
+class VADHandler(HandlerBase, ABC):
     """
     用于处理音频语音活动检测（VAD）。
     加载 Silero VAD 模型，处理音频数据，检测语音活动，并生成相应的输出数据。

@@ -53,7 +53,15 @@ class ClientHandlerRtc(ClientHandlerBase):
         )
         self.rtc_streamer_factory.client_handler_delegate = self.handler_delegate
 
-        # 音频、视频、文本的数据包定义
+        # 文本、音频、视频的数据包定义
+        # 文本定义
+        text_output_definition = DataBundleDefinition()
+        text_output_definition.add_entry(DataBundleEntry.create_text_entry(
+            "human_text",
+        ))
+        text_output_definition.lockdown()
+        self.output_bundle_definitions[EngineChannelType.TEXT] = text_output_definition
+
         # 音频定义
         audio_output_definition = DataBundleDefinition()
         audio_output_definition.add_entry(DataBundleEntry.create_audio_entry(
@@ -74,14 +82,6 @@ class ClientHandlerRtc(ClientHandlerBase):
         ))
         video_output_definition.lockdown()
         self.output_bundle_definitions[EngineChannelType.VIDEO] = video_output_definition
-
-        # 文本定义
-        text_output_definition = DataBundleDefinition()
-        text_output_definition.add_entry(DataBundleEntry.create_text_entry(
-            "human_text",
-        ))
-        text_output_definition.lockdown()
-        self.output_bundle_definitions[EngineChannelType.TEXT] = text_output_definition
 
     def load(self, engine_config: ChatEngineConfigModel, handler_config: Optional[HandlerBaseConfigModel] = None):
         """
