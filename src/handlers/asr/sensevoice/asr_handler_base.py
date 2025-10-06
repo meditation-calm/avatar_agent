@@ -26,7 +26,6 @@ class ASRContext(HandlerContext):
             slice_size=16000,
             slice_axis=0,
         )
-        self.cache = {}
 
         self.dump_audio = True
         self.audio_dump_file = None

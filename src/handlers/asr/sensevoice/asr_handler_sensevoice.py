@@ -82,11 +82,13 @@ class ASRHandler(HandlerBase, ABC):
         """ 处理输入音频数据并生成文本输出 """
         output_definition = output_definitions.get(ChatDataType.HUMAN_TEXT).definition
         context = cast(ASRContext, context)
-        """ 验证输入数据类型是否为 HUMAN_AUDIO """
-        if inputs.type == ChatDataType.HUMAN_AUDIO:
-            audio = inputs.data.get_main_data()
-        else:
+        """ 检查是否语言唤醒 """
+        if context.shared_states.enable_kws:
             return
+        """ 验证输入数据类型是否为 HUMAN_AUDIO """
+        if inputs.type != ChatDataType.HUMAN_AUDIO:
+            return
+        audio = inputs.data.get_main_data()
         """ 获取语音ID，如果不存在则使用会话ID """
         speech_id = inputs.data.get_meta("speech_id")
         if speech_id is None:
@@ -151,6 +153,7 @@ class ASRHandler(HandlerBase, ABC):
         end_output.set_main_data('')
         end_output.add_meta("human_text_end", True)
         end_output.add_meta("speech_id", speech_id)
+        context.shared_states.enable_vad = True
         yield end_output
 
     def destroy_context(self, context: HandlerContext):

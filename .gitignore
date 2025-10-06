@@ -23,6 +23,7 @@ models/*
 !models/silero_vad/
 cache/*
 !cache/temp_file_here.txt
+test
 
 uv.lock
 logs/

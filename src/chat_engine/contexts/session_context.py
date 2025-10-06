@@ -15,9 +15,11 @@ class SharedStates:
     用于在会话中共享状态信息的数据类：
         active：布尔值，表示会话是否处于活动状态，默认为 False
         enable_vad：布尔值，表示是否启用语音活动检测（Voice Activity Detection），默认为 True
+        enable_kws：布尔值，表示是否启用语言唤醒，默认为 True
     """
     active: bool = False
     enable_vad: bool = True
+    enable_kws: bool = False
 
 
 class SessionContext(object):
