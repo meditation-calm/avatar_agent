@@ -1,4 +1,4 @@
-import math
+import os.path
 from abc import ABC
 from typing import cast, Dict
 
@@ -14,6 +14,7 @@ from src.chat_engine.data_models.chat_data.chat_data_model import ChatData
 from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import ChatEngineConfigModel
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundleDefinition, DataBundleEntry, DataBundle
+from src.engine_utils.directory_info import DirectoryInfo
 from src.engine_utils.general_slicer import slice_data
 from src.handlers.kws.xiaoyun.kws_handler_base import KwsConfig, KwsContext
 
@@ -48,7 +49,7 @@ class KwsHandler(HandlerBase, ABC):
         self.model_name = handler_config.model_name
         self.model = AutoModel(model=self.model_name,
                                keywords=handler_config.keywords,
-                               output_dir="cache/kws",
+                               output_dir=os.path.join(DirectoryInfo.get_project_dir(), "cache"),
                                disable_update=True)
         logger.info(f"Loaded xiaoyun kWS model from {self.model_name}")
 
@@ -136,10 +137,13 @@ class KwsHandler(HandlerBase, ABC):
                             context.shared_states.enable_kws = False
                             speech_id = f"speech-{context.session_id}"
                             output = DataBundle(output_definition)
+                            if output_audio.dtype != np.float32:
+                                output_audio = output_audio.astype(np.float32)
                             if output_audio.ndim == 1:
-                                output.set_main_data(np.expand_dims(output_audio, axis=0))
-                            else:
-                                output.set_main_data(output_audio)
+                                output_audio = output_audio[np.newaxis, ...]
+                            elif output_audio.ndim == 2 and output_audio.shape[0] != 1:
+                                output_audio = output_audio[:1, ...]
+                            output.set_main_data(output_audio)
                             output.add_meta("speech_id", speech_id)
                             output.add_meta("human_speech_end", True)
                             return output

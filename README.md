@@ -6,6 +6,8 @@ Avatar Agent 是一个基于AI的实时音视频交互系统，集成了语音�
 
 - 实时音视频通信（基于WebRTC）
 - 语音活动检测（VAD）
+- 语言唤醒检测（KWS）
+- 自然语言处理（LLM）
 - 自动语音识别（ASR）
 - 大语言模型对话（兼容OpenAI API）
 - 文本转语音（TTS）
@@ -17,7 +19,7 @@ Avatar Agent 是一个基于AI的实时音视频交互系统，集成了语音�
 - 后端框架：FastAPI、Uvicorn
 - 前端界面：Gradio
 - 实时通信：WebRTC (aiortc)
-- 语音处理：Silero VAD、SenseVoice ASR、CosyVoice TTS
+- 语音处理：Silero VAD、XiaoYun KWS SenseVoice ASR、CosyVoice TTS
 - 自然语言处理：OpenAI兼容API
 - 配置管理：Dynaconf、Pydantic
 - 日志管理：Loguru

@@ -161,7 +161,6 @@ class RtcStream(AsyncAudioVideoStreamHandler):
         try:
             if not self.first_audio_emitted:
                 await asyncio.sleep(0.1)
-            self.emit_counter.add_property("video_emit")
             while not self.quit.is_set():
                 video_frame_data: ChatData = await self.client_session_delegate.get_data(EngineChannelType.VIDEO)
                 if video_frame_data is None or video_frame_data.data is None:
@@ -169,6 +168,7 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 frame_data = video_frame_data.data.get_main_data().squeeze()
                 if frame_data is None:
                     continue
+                self.emit_counter.add_property("video_emit")
                 return frame_data
         except Exception as e:
             logger.opt(exception=e).error(f"Error in video_emit: ")
