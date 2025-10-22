@@ -82,7 +82,9 @@ class HandlerTTS(HandlerBase, ABC):
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("avatar_audio", 1, self.sample_rate))
+        definition.add_entry(DataBundleEntry.create_audio_entry(
+            "avatar_audio", 1, self.sample_rate
+        ))
         inputs = {
             ChatDataType.AVATAR_TEXT: HandlerDataInfo(
                 type=ChatDataType.AVATAR_TEXT,

@@ -72,7 +72,9 @@ class KwsHandler(HandlerBase, ABC):
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("kws_human_audio", 1, 16000))
+        definition.add_entry(DataBundleEntry.create_audio_entry(
+            "kws_human_audio", 1, 16000
+        ))
 
         inputs = {
             ChatDataType.HUMAN_AUDIO: HandlerDataInfo(

@@ -49,7 +49,9 @@ class TTSHandler(HandlerBase, ABC):
                            context: HandlerContext) -> HandlerDetail:
         context = cast(TTSContext, context)
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("avatar_audio", 1, context.config.sample_rate))
+        definition.add_entry(DataBundleEntry.create_audio_entry(
+            "avatar_audio", 1, context.config.sample_rate
+        ))
         inputs = {
             ChatDataType.AVATAR_TEXT: HandlerDataInfo(
                 type=ChatDataType.AVATAR_TEXT,

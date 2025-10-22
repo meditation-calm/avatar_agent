@@ -81,8 +81,9 @@ class VADHandler(HandlerBase, ABC):
                            context: HandlerContext) -> HandlerDetail:
         """ 返回处理器的输入输出定义，指定输入为麦克风音频，输出为人类语音。 """
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("human_audio", 1, 16000))
-
+        definition.add_entry(DataBundleEntry.create_audio_entry(
+            "human_audio", 1, 16000
+        ))
         inputs = {
             ChatDataType.MIC_AUDIO: HandlerDataInfo(
                 type=ChatDataType.MIC_AUDIO

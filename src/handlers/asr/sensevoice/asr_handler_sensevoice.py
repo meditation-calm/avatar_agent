@@ -43,7 +43,9 @@ class ASRHandler(HandlerBase, ABC):
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry("avatar_audio", 1, 24000))
+        definition.add_entry(DataBundleEntry.create_audio_entry(
+            "avatar_audio", 1, 24000
+        ))
         inputs = {
             ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
                 type=ChatDataType.HUMAN_AUDIO,
