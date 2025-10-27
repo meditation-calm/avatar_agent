@@ -155,7 +155,6 @@ class ASRHandler(HandlerBase, ABC):
         end_output.set_main_data('')
         end_output.add_meta("human_text_end", True)
         end_output.add_meta("speech_id", speech_id)
-        context.shared_states.enable_vad = True
         yield end_output
 
     def destroy_context(self, context: HandlerContext):

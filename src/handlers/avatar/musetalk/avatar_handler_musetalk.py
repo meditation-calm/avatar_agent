@@ -39,21 +39,13 @@ class HandlerAvatar(HandlerBase, ABC):
         super().__init__()
         self.avatar: Optional[Avatar] = None
         self.processor: Optional[AvatarProcessor] = None
-        self.audio_input_thread = None
         self.event_in_queue = queue.Queue()
         self.event_out_queue = queue.Queue()
         self.audio_out_queue = queue.Queue()
         self.video_out_queue = queue.Queue()
         self.output_data_definitions: Dict[ChatDataType, DataBundleDefinition] = {}
-        self.shared_state = None
+        self.shared_states = None
         self._debug_cache = {}
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda:0")
-        elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
-        logger.info(f"Avatar MuseTalk Using device: {self.device}")
 
     def get_handler_info(self) -> HandlerBaseInfo:
         return HandlerBaseInfo(
@@ -130,14 +122,14 @@ class HandlerAvatar(HandlerBase, ABC):
     def create_context(self, session_context: SessionContext, handler_config=None) -> HandlerContext:
         if not isinstance(handler_config, AvatarConfig):
             handler_config = AvatarConfig()
-        self.shared_state = session_context.shared_states
+        self.shared_states = session_context.shared_states
         context = AvatarContext(
             session_context.session_info.session_id,
             self.event_in_queue,
             self.event_out_queue,
             self.audio_out_queue,
             self.video_out_queue,
-            self.shared_state
+            self.shared_states
         )
         context.config = handler_config
 
@@ -229,16 +221,7 @@ class HandlerAvatar(HandlerBase, ABC):
                 self.processor.add_audio(audio_input)
 
     def destroy_context(self, context: HandlerContext):
-        pass
-
-    def _save_debug_cache(self, speech_id: str, debug_root: str) -> None:
-        """
-        Save and clear debug cache for a given speech_id.
-        """
-        debug_file = os.path.join(debug_root, f"{speech_id}.pkl")
-        try:
-            with open(debug_file, "wb") as f:
-                pickle.dump(self._debug_cache[speech_id], f)
-            del self._debug_cache[speech_id]
-        except Exception as e:
-            logger.error(f"Failed to save debug record: {e}")
+        if self.processor:
+            self.processor.stop()
+        if isinstance(context, AvatarContext):
+            context.clear()

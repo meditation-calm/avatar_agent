@@ -338,6 +338,209 @@ class Avatar:
             self.idx = self.idx + 1
 
     @torch.no_grad()
+    def generate_frames(self, whisper_chunks: torch.Tensor, start_idx: int, batch_size: int) -> list:
+        t0 = time.time()
+        # Ensure whisper_chunks shape is (B, 50, 384)
+        if whisper_chunks.ndim == 2:
+            whisper_chunks = whisper_chunks.unsqueeze(0)
+        elif whisper_chunks.ndim == 3 and whisper_chunks.shape[0] == 1:
+            pass
+        B = whisper_chunks.shape[0]
+        assert B == batch_size, f"whisper_chunks.shape[0] ({B}) != batch_size ({batch_size})"
+        idx_list = [start_idx + i for i in range(batch_size)]
+        latent_list = []
+        t1 = time.time()
+        for idx in idx_list:
+            latent = self.input_latent_list_cycle[idx % len(self.input_latent_list_cycle)]
+            if latent.dim() == 3:
+                latent = latent.unsqueeze(0)
+            latent_list.append(latent)
+        latent_batch = torch.cat(latent_list, dim=0)  # [B, ...]
+        t2 = time.time()
+        audio_feature = self.pe(whisper_chunks.to(self.device))
+        t3 = time.time()
+        latent_batch = latent_batch.to(device=self.device, dtype=self.unet.model.dtype)
+        t4 = time.time()
+        pred_latents = self.unet.model(
+            latent_batch,
+            self.timesteps,
+            encoder_hidden_states=audio_feature
+        ).sample
+        # # Force set pred_latents to all nan for debugging： unet get nan value
+        # pred_latents[:] = float('nan')
+        t5 = time.time()
+        pred_latents = pred_latents.to(device=self.device, dtype=self.vae.vae.dtype)
+        recon = self.vae.decode_latents(pred_latents)
+        t6 = time.time()
+        avg_time = (t6 - t0) / B if B > 0 else 0.0
+        fps = 1.0 / avg_time if avg_time > 0 else 0.0
+        logger.info(
+            f"[PROFILE] generate_frames: start_idx={start_idx}, batch_size={batch_size}, "
+            f"prep_whisper={t1-t0:.4f}s, prep_latent={t2-t1:.4f}s, pe={t3-t2:.4f}s, "
+            f"latent_to={t4-t3:.4f}s, unet={t5-t4:.4f}s, vae={t6-t5:.4f}s, total={t6-t0:.4f}s, total_per_frame={avg_time:.4f}s, fps={fps:.2f}"
+        )
+        logger.info(f"latent_batch stats: min={latent_batch.min().item()}, max={latent_batch.max().item()}, mean={latent_batch.mean().item()}, nan_count={(torch.isnan(latent_batch).sum().item() if torch.isnan(latent_batch).any() else 0)}")
+        logger.info(f"pred_latents stats: min={pred_latents.min().item()}, max={pred_latents.max().item()}, mean={pred_latents.mean().item()}, nan_count={(torch.isnan(pred_latents).sum().item() if torch.isnan(pred_latents).any() else 0)}")
+        if isinstance(recon, np.ndarray):
+            logger.info(f"recon stats: min={recon.min()}, max={recon.max()}, mean={recon.mean()}, nan_count={np.isnan(recon).sum()}")
+        elif isinstance(recon, torch.Tensor):
+            logger.info(f"recon stats: min={recon.min().item()}, max={recon.max().item()}, mean={recon.mean().item()}, nan_count={(torch.isnan(recon).sum().item() if torch.isnan(recon).is_floating_point() else 0)}")
+        else:
+            logger.info(f"recon type: {type(recon)}")
+        return [(recon[i], idx_list[i]) for i in range(B)]
+
+    @torch.no_grad()
+    def generate_frames_unet(self, whisper_chunks: torch.Tensor, start_idx: int, batch_size: int) -> list:
+        """
+        批量音频特征unet推理生成帧的潜在特征
+        whisper_chunks: 音频特征张量，形状 [B, 50, 384]
+        start_idx: 起始帧索引
+        batch_size: 批处理大小
+        Return: [pred_latents, idx_list] 包含预测潜在向量和索引列表的列表
+        """
+        t0 = time.time()
+        """
+        确保输入张量维度正确，如果是2D张量则添加批次维度
+        验证批次大小与输入张量的第一个维度匹配
+        """
+        if whisper_chunks.ndim == 2:
+            whisper_chunks = whisper_chunks.unsqueeze(0)
+        elif whisper_chunks.ndim == 3 and whisper_chunks.shape[0] == 1:
+            pass
+        B = whisper_chunks.shape[0]
+        assert B == batch_size, f"whisper_chunks.shape[0] ({B}) != batch_size ({batch_size})"
+        # 生成帧索引列表
+        idx_list = [start_idx + i for i in range(batch_size)]
+        """
+        从循环潜在向量列表中获取对应索引的潜在向量
+        处理维度不一致的情况
+        将所有潜在向量拼接成批次张量
+        """
+        latent_list = []
+        t1 = time.time()
+        for idx in idx_list:
+            latent = self.input_latent_list_cycle[idx % len(self.input_latent_list_cycle)]
+            if latent.dim() == 3:
+                latent = latent.unsqueeze(0)
+            latent_list.append(latent)
+        latent_batch = torch.cat(latent_list, dim=0)  # [B, ...]
+        t2 = time.time()
+        # 使用姿态编码器(position encoder, self.pe)处理音频特征
+        audio_feature = self.pe(whisper_chunks.to(self.device))
+        t3 = time.time()
+        latent_batch = latent_batch.to(device=self.device, dtype=self.unet.model.dtype)
+        t4 = time.time()
+        # self.unet.model: UNet2DConditionModel
+        # -> input: latent_batch: torch.Size([B, 8, 32, 32],torch.float32
+        # -> input: timesteps: torch.Size([1],torch.int64
+        # -> input: audio_feature: torch.Size([B, 50, 384],torch.float32
+        # <- output: pred_latents: torch.Size([B, 4, 32, 32],torch.float32
+        # UNet模型推理
+        pred_latents = self.unet.model(
+            latent_batch,
+            self.timesteps,
+            encoder_hidden_states=audio_feature
+        ).sample
+        t5 = time.time()
+        avg_time = (t5 - t0) / B if B > 0 else 0.0
+        logger.info(
+            f"[PROFILE] generate_frames_unet: start_idx={start_idx}, batch_size={batch_size}, "
+            f"prep_whisper={t1-t0:.4f}s, prep_latent={t2-t1:.4f}s, pe={t3-t2:.4f}s, "
+            f"latent_to={t4-t3:.4f}s, unet={t5-t4:.4f}s, total={t5-t0:.4f}s, total_per_frame={avg_time:.4f}s"
+        )
+        logger.info(f"latent_batch stats: "
+                    f"min={latent_batch.min().item()}, "
+                    f"max={latent_batch.max().item()}, "
+                    f"mean={latent_batch.mean().item()}, "
+                    f"nan_count={(torch.isnan(latent_batch).sum().item() if torch.isnan(latent_batch).any() else 0)}")
+        logger.info(f"pred_latents stats: "
+                    f"min={pred_latents.min().item()}, "
+                    f"max={pred_latents.max().item()}, "
+                    f"mean={pred_latents.mean().item()}, "
+                    f"nan_count={(torch.isnan(pred_latents).sum().item() if torch.isnan(pred_latents).any() else 0)}")
+        return [pred_latents, idx_list]
+
+    @torch.no_grad()
+    def generate_frames_vae(self, pred_latents: torch.Tensor, idx_list: list, batch_size: int) -> list:
+        """
+        将UNet模型生成的潜在特征向量通过VAE解码器转换为可视化的图像帧
+        pred_latents: UNet模型输出的潜在向量，形状为 [B, 4, 32, 32]
+        idx_list: frame index list 帧索引列表
+        batch_size: batch size 批处理大小
+        Return: List of (recon, idx) tuples, length is batch_size
+        """
+        t0 = time.time()
+        B = pred_latents.shape[0]
+        assert B == batch_size, f"pred_latents.shape[0] ({B}) != batch_size ({batch_size})"
+        pred_latents = pred_latents.to(device=self.device, dtype=self.vae.vae.dtype)
+        # ----- self.vae.decode_latents: AutoencoderKL -----
+        # -> input: pred_latents: torch.Size([B, 4, 32, 32],torch.float32
+        # <- output: recon: numpy.ndarray: (B, 256, 256, 3),np.float32
+        recon = self.vae.decode_latents(pred_latents)
+        t1 = time.time()
+        avg_time = (t1 - t0) / B if B > 0 else 0.0
+        logger.info(
+            f"[PROFILE] generate_frames: start_idx={idx_list[0]}, batch_size={batch_size}, "
+            f"vae={t1-t0:.4f}s, total={t1-t0:.4f}s, total_per_frame={avg_time:.4f}s"
+        )
+        logger.info(f"pred_latents stats: min={pred_latents.min().item()}, max={pred_latents.max().item()}, mean={pred_latents.mean().item()}, nan_count={(torch.isnan(pred_latents).sum().item() if torch.isnan(pred_latents).any() else 0)}")
+        if isinstance(recon, np.ndarray):
+            logger.info(f"recon stats: min={recon.min()}, max={recon.max()}, mean={recon.mean()}, nan_count={np.isnan(recon).sum()}")
+        elif isinstance(recon, torch.Tensor):
+            logger.info(f"recon stats: min={recon.min().item()}, max={recon.max().item()}, mean={recon.mean().item()}, nan_count={(torch.isnan(recon).sum().item() if torch.isnan(recon).is_floating_point() else 0)}")
+        else:
+            logger.info(f"recon type: {type(recon)}")
+        return [(recon[i], idx_list[i]) for i in range(B)]
+
+    def generate_frames_avatar(self, res_frame, idx):
+        """ 融合面部帧与原始视频帧生成视频帧 """
+        t0 = time.time()
+        """
+        从循环列表中获取当前帧对应的人脸边界框坐标
+        深拷贝原始帧作为背景基础
+        """
+        bbox = self.coord_list_cycle[idx % len(self.coord_list_cycle)]
+        ori_frame = copy.deepcopy(self.frame_list_cycle[idx % len(self.frame_list_cycle)])
+        t1 = time.time()
+        """
+        将生成的面部图像调整到与原始人脸区域相同的尺寸
+        如果调整失败，则返回原始帧
+        """
+        x1, y1, x2, y2 = bbox
+        try:
+            res_frame = cv2.resize(res_frame.astype(np.uint8), (x2 - x1, y2 - y1))
+        except Exception as e:
+            logger.opt(exception=True).error(f"generate_frames_avatar error: {str(e)}")
+            return ori_frame
+        t2 = time.time()
+        if np.all(res_frame == 0):
+            logger.warning(f"generate_frames_avatar: res_frame is all zero, return ori_frame, idx={idx}")
+            return ori_frame
+        """ 获取用于融合的面部遮罩及其坐标信息 """
+        mask = self.mask_list_cycle[idx % len(self.mask_list_cycle)]
+        mask_crop_box = self.mask_coords_list_cycle[idx % len(self.mask_coords_list_cycle)]
+        t3 = time.time()
+        """ 面部与原始帧融合 """
+        # combine_frame = self.acc_get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        combine_frame = get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        t4 = time.time()
+        total_time = t4 - t0
+        fps = 1.0 / total_time if total_time > 0 else 0
+        if fps < self.fps:
+            logger.warning(f"[PROFILE] generate_frames_avatar fps is not enough, fps={fps:.2f}, self.fps={self.fps}")
+        logger.info(
+            f"[PROFILE] generate_frames_avatar: idx={idx}, ori_copy={t1-t0:.4f}s, "
+            f"resize={t2-t1:.4f}s, mask_fetch={t3-t2:.4f}s, "
+            f"blend={t4-t3:.4f}s, total={total_time:.4f}s, fps={fps:.2f}"
+        )
+        return combine_frame
+
+    def generate_idle_frame(self, idx: int) -> np.ndarray:
+        """ 生成空闲帧 保持自然的静态画面 """
+        # Directly return a frame from the original frame cycle
+        return self.frame_list_cycle[idx % len(self.frame_list_cycle)]
+
+    @torch.no_grad()
     def inference(self, audio_path, out_vid_name, fps, skip_save_images):
         """
         推理生成avatar video
