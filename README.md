@@ -41,17 +41,60 @@ git submodule update --init --recursive --depth 1
 ### 2. 创建虚拟环境
 
 ```bash
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# Linux/MacOS
-source venv/bin/activate
+conda create --name avatar-server python=3.11
+conda activate avatar-server
 ```
 
 ### 3. 安装依赖
 
 ```bash
 pip install -r requirements.txt
+```
+
+#### MuseTalk必要依赖安装
+
+##### 安装 MMLab 生态系统包：
+```bash
+pip install --no-cache-dir -U openmim
+mim install mmengine
+mim install "mmcv==2.0.1"
+mim install "mmdet==3.1.0"
+mim install "mmpose==1.1.0"
+```
+
+##### 设置安装 FFmpeg
+
+##### 下载权重
+
+linux系统：
+```bash
+sh ./download_weights.sh
+```
+
+权重组织结构
+```text
+./models/
+├── musetalk
+│   └── musetalk.json
+│   └── pytorch_model.bin
+├── musetalkV15
+│   └── musetalk.json
+│   └── unet.pth
+├── syncnet
+│   └── latentsync_syncnet.pt
+├── dwpose
+│   └── dw-ll_ucoco_384.pth
+├── face-parse-bisent
+│   ├── 79999_iter.pth
+│   └── resnet18-5c106cde.pth
+├── sd-vae
+│   ├── config.json
+│   └── diffusion_pytorch_model.bin
+└── whisper
+    ├── config.json
+    ├── pytorch_model.bin
+    └── preprocessor_config.json
+    
 ```
 
 ### 4. 生成SSL证书（用于HTTPS）
