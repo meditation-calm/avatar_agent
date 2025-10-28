@@ -41,8 +41,8 @@ git submodule update --init --recursive --depth 1
 ### 2. 创建虚拟环境
 
 ```bash
-conda create --name avatar-server python=3.11
-conda activate avatar-server
+conda create --name avatar-agent python=3.11
+conda activate avatar-agent
 ```
 
 ### 3. 安装依赖
