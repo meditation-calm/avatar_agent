@@ -27,6 +27,7 @@ handlers_dir = os.path.join(handlers_dir, "src")
 if handlers_dir not in sys.path:
     sys.path.append(handlers_dir)
 
+from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.audio_processor import AudioProcessor
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.blending import get_image_prepare_material, get_image_blending
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.face_parsing import FaceParsing
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.utils import load_all_model, datagen
