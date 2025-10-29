@@ -5,6 +5,7 @@ import os
 import pickle
 import queue
 import shutil
+import sys
 import threading
 import time
 
@@ -15,7 +16,17 @@ from loguru import logger
 from tqdm import tqdm
 from transformers import WhisperModel
 
-from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.audio_processor import AudioProcessor
+# 添加MuseTalk模块路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+musetalk_module_path = os.path.join(current_dir, "MuseTalk")
+if musetalk_module_path not in sys.path:
+    sys.path.append(musetalk_module_path)
+
+handlers_dir = os.getcwd()
+handlers_dir = os.path.join(handlers_dir, "src")
+if handlers_dir not in sys.path:
+    sys.path.append(handlers_dir)
+
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.blending import get_image_prepare_material, get_image_blending
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.face_parsing import FaceParsing
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.utils import load_all_model, datagen
