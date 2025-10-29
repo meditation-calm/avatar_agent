@@ -57,9 +57,9 @@ pip install -r requirements.txt
 ```bash
 pip install --no-cache-dir -U openmim
 mim install mmengine
-mim install "mmcv==2.0.1"
-mim install "mmdet==3.1.0"
-mim install "mmpose==1.1.0"
+mim install mmcv==2.0.1
+mim install mmdet==3.1.0
+mim install mmpose==1.1.0
 ```
 
 ##### 设置安装 FFmpeg
@@ -131,6 +131,8 @@ bash scripts/create_ssl_certs.sh
 ### 启动服务
 
 ```bash
+# 在运行命令前设置PYTHONPATH
+export PYTHONPATH=/mnt/19d1c476-ff03-4b9b-8605-718608679932/human/avatar_agent:$PYTHONPATH
 python src/app.py --config config/config.yaml
 ```
 

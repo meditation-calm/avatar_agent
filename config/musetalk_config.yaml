@@ -52,7 +52,7 @@ default:
         speed: 1.0
         pitch_rate: 1.0
       MuseTalk:
-        module: avatar/musetalk/avatar_handler_musetalk.py
+        module: avatar/musetalk/avatar_handler_musetalk
         bbox_shift: -7
         batch_size: 5
         avatar_video_path: "config/video/book.mp4"

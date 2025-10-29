@@ -30,6 +30,7 @@ openai-whisper==20240930
 pyarrow>=19.0.1
 pynini==2.1.6
 pyworld==0.3.4
+rich==13.7.1
 wget==3.2
 wetext
 
