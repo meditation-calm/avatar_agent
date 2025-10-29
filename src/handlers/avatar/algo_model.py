@@ -29,8 +29,8 @@ class Tts2FaceEvent(Enum):
 
 
 class AudioFrame(BaseModel):
-    speech_id: Any = ""
-    speech_end: bool = False
+    speech_id: Any
+    speech_end: bool
     frame: bytes | av.AudioFrame
 
     model_config = {
@@ -39,8 +39,8 @@ class AudioFrame(BaseModel):
 
 
 class VideoFrame(BaseModel):
-    speech_id: Any = ""
-    speech_end: bool = False
+    speech_id: Any
+    speech_end: bool
     avatar_status: AvatarStatus
     frame: Any | av.VideoFrame
     bg_frame_id: int

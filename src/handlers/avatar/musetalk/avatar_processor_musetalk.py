@@ -147,8 +147,11 @@ class AvatarProcessor:
             return
 
         try:
-            speech_audio.audio_data = audio_data
-            self._audio_queue.put(speech_audio, timeout=1)
+            self._audio_queue.put({
+                "speech_id": speech_audio.speech_id,
+                "speech_end": speech_audio.speech_end,
+                "audio_data": audio_data
+            }, timeout=1)
         except queue.Full:
             logger.opt(exception=True).error(f"Audio queue full, dropping audio segment, "
                                              f"speech_id={speech_audio.speech_id}")
