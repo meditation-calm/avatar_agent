@@ -29,11 +29,9 @@ class Tts2FaceEvent(Enum):
 
 
 class AudioFrame(BaseModel):
-    def __init__(self, speech_id: Any, speech_end: bool, frame: bytes | av.AudioFrame):
-        super().__init__()
-        self.speech_id = speech_id
-        self.speech_end = speech_end
-        self.frame = frame
+    speech_id: Any = ""
+    speech_end: bool = False
+    frame: bytes | av.AudioFrame
 
     model_config = {
         "arbitrary_types_allowed": True
@@ -41,13 +39,11 @@ class AudioFrame(BaseModel):
 
 
 class VideoFrame(BaseModel):
-    def __init__(self, speech_id: Any, speech_end: bool, avatar_status: AvatarStatus, frame: Any | av.VideoFrame, bg_frame_id: int):
-        super().__init__()
-        self.speech_id = speech_id
-        self.speech_end = speech_end
-        self.avatar_status = avatar_status
-        self.frame = frame
-        self.bg_frame_id = bg_frame_id
+    speech_id: Any = ""
+    speech_end: bool = False
+    avatar_status: AvatarStatus
+    frame: Any | av.VideoFrame
+    bg_frame_id: int
 
     model_config = {
         "arbitrary_types_allowed": True
