@@ -28,7 +28,7 @@ class TTSContext(HandlerContext):
         self.audio_dump_file = None
         if self.dump_audio:
             localtime = time.localtime()
-            dump_file_path = os.path.join(DirectoryInfo.get_project_dir(), 'cache',
+            dump_file_path = os.path.join(DirectoryInfo.get_cache_dir(),
                                           f"dump_avatar_audio_{self.session_id}_{localtime.tm_hour}_{localtime.tm_min}.pcm")
             self.audio_dump_file = open(dump_file_path, "wb")
         self.synthesizer = None

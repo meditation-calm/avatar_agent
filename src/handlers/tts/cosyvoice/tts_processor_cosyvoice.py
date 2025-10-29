@@ -36,7 +36,7 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
         logger.remove()
         logger.add(sys.stdout, level='INFO')
         if self.dump_audio:
-            dump_file_path = os.path.join(DirectoryInfo.get_project_dir(), "cache", "dump_avatar_audio.pcm")
+            dump_file_path = os.path.join(DirectoryInfo.get_cache_dir(), "dump_avatar_audio.pcm")
             self.audio_dump_file = open(dump_file_path, "wb")
         logger.info(f"Start CosyVoice TTS processor with model {self.model_name}")
         # use local model

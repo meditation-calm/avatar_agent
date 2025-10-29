@@ -30,7 +30,6 @@ class ASRContext(HandlerContext):
         self.dump_audio = True
         self.audio_dump_file = None
         if self.dump_audio:
-            dump_file_path = os.path.join(DirectoryInfo.get_project_dir(), "cache",
-                                          "dump_talk_audio.pcm")
+            dump_file_path = os.path.join(DirectoryInfo.get_cache_dir(), "dump_talk_audio.pcm")
             self.audio_dump_file = open(dump_file_path, "wb")
         self.shared_states = None

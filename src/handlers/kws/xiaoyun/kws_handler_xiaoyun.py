@@ -49,7 +49,7 @@ class KwsHandler(HandlerBase, ABC):
         self.model_name = handler_config.model_name
         self.model = AutoModel(model=self.model_name,
                                keywords=handler_config.keywords,
-                               output_dir=os.path.join(DirectoryInfo.get_project_dir(), "cache"),
+                               output_dir=os.path.join(DirectoryInfo.get_cache_dir()),
                                disable_update=True)
         logger.info(f"Loaded xiaoyun kWS model from {self.model_name}")
 
