@@ -18,8 +18,8 @@ from transformers import WhisperModel
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.audio_processor import AudioProcessor
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.blending import get_image_prepare_material, get_image_blending
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.face_parsing import FaceParsing
-from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.preprocessing import read_imgs, get_landmark_and_bbox
 from src.handlers.avatar.musetalk.MuseTalk.musetalk.utils.utils import load_all_model, datagen
+from src.handlers.avatar.musetalk.utils.preprocessing import read_imgs, get_landmark_and_bbox
 
 
 def osmakedirs(path_list):
