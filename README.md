@@ -35,7 +35,7 @@ git clone <仓库地址>
 cd avatar_agent
 
 # 更新子模块
-git submodule update --init --recursive --depth 1
+git submodule update --init --recursive
 ```
 
 ### 2. 创建虚拟环境
@@ -63,6 +63,17 @@ mim install "mmpose==1.1.0"
 ```
 
 ##### 设置安装 FFmpeg
+
+ubuntu 系统下安装
+```bash
+apt update
+apt install ffmpeg -y
+```
+
+conda 环境下安装
+```bash
+conda install -c conda-forge ffmpeg -y
+```
 
 ##### 下载权重
 
