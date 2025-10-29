@@ -175,7 +175,7 @@ class HandlerAvatar(HandlerBase, ABC):
         context = cast(AvatarContext, context)
         if inputs.type != ChatDataType.AVATAR_AUDIO:
             return
-        speech_id = inputs.data.get_meta("speech_id")
+        speech_id = inputs.data.get_meta("speech_id", context.session_id)
         avatar_speech_end = inputs.data.get_meta("avatar_speech_end", False)
         audio_entry = inputs.data.get_main_definition_entry()
         audio_array = inputs.data.get_main_data()

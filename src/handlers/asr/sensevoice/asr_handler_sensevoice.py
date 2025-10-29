@@ -92,9 +92,7 @@ class ASRHandler(HandlerBase, ABC):
             return
         audio = inputs.data.get_main_data()
         """ 获取语音ID，如果不存在则使用会话ID """
-        speech_id = inputs.data.get_meta("speech_id")
-        if speech_id is None:
-            speech_id = context.session_id
+        speech_id = inputs.data.get_meta("speech_id", context.session_id)
 
         if audio is not None:
             audio = audio.squeeze()
