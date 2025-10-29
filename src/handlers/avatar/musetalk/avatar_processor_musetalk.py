@@ -69,6 +69,7 @@ class AvatarProcessor:
                 self._frame_gen_vae_thread.start()
             else:
                 self._frame_gen_thread.start()
+            self._frame_gen_avatar.start()
             self._frame_collect_thread.start()
             logger.info(f"MuseTalk Processor started.")
         except Exception as e:
