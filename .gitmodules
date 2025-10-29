@@ -1,6 +1,3 @@
 [submodule "src/handlers/tts/cosyvoice/CosyVoice"]
 	path = src/handlers/tts/cosyvoice/CosyVoice
 	url = https://github.com/FunAudioLLM/CosyVoice.git
-[submodule "src/handlers/avatar/musetalk/MuseTalk"]
-	path = src/handlers/avatar/musetalk/MuseTalk
-	url = https://github.com/TMElyralab/MuseTalk.git
