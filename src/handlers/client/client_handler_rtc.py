@@ -113,7 +113,7 @@ class ClientHandlerRtc(ClientHandlerBase):
             handler=self.rtc_streamer_factory,
             concurrency_limit=self.handler_config.concurrent_limit,
         )
-        webrtc.mount(fastapi)
+        webrtc.mount(fastapi, path='/web')
 
         @fastapi.get('/health')
         async def health():
