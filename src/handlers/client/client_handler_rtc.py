@@ -170,9 +170,9 @@ class ClientHandlerRtc(ClientHandlerBase):
             ChatDataType.AVATAR_AUDIO: HandlerDataInfo(
                 type=ChatDataType.AVATAR_AUDIO
             ),
-            # ChatDataType.AVATAR_VIDEO: HandlerDataInfo(
-            #     type=ChatDataType.AVATAR_VIDEO
-            # ),
+            ChatDataType.AVATAR_VIDEO: HandlerDataInfo(
+                type=ChatDataType.AVATAR_VIDEO
+            ),
         }
         outputs = {
             ChatDataType.HUMAN_TEXT: HandlerDataInfo(
