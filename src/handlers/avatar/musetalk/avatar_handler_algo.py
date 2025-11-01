@@ -533,8 +533,8 @@ class Avatar:
         mask_crop_box = self.mask_coords_list_cycle[idx % len(self.mask_coords_list_cycle)]
         t3 = time.time()
         """ 面部与原始帧融合 """
-        # combine_frame = self.acc_get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
-        combine_frame = get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        combine_frame = self.acc_get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        # combine_frame = get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
         t4 = time.time()
         total_time = t4 - t0
         fps = 1.0 / total_time if total_time > 0 else 0
@@ -546,6 +546,44 @@ class Avatar:
             f"blend={t4-t3:.4f}s, total={total_time:.4f}s, fps={fps:.2f}"
         )
         return combine_frame
+
+    def acc_get_image_blending(self, image, face, face_box, mask_array, crop_box):
+        # 1. BGR2RGB
+        body_cpy = image#[:, :, ::-1]
+        face_cpy = face#[:, :, ::-1]
+        x, y, x1, y1 = face_box
+        x_s, y_s, x_e, y_e = crop_box
+
+        # 2.crop face_Large
+        face_large1 = body_cpy[y_s:y_e, x_s:x_e].copy()
+
+        # 3. mask
+        # mask_array: numpy.ndarray, uint8
+        scale = 1.0 / 255.0
+        mask_f = mask_array.astype(np.float32) * scale
+        mask3 = np.stack([mask_f]*3, axis=2)
+
+        # 4. past face into face_large
+        face_large1[y-y_s:y1-y_s, x-x_s:x1-x_s] = face_cpy
+
+        # 5.merge face_large with body_crop
+        body_crop = body_cpy[y_s:y_e, x_s:x_e].copy()
+
+        # make sure the shape are equal
+        if face_large1.shape != mask3.shape:
+            min_height = min(face_large1.shape[0], mask3.shape[0])
+            min_width = min(face_large1.shape[1], mask3.shape[1])
+            face_large1 = face_large1[:min_height, :min_width]
+            body_crop = body_crop[:min_height, :min_width]
+            mask3 = mask3[:min_height, :min_width]
+        blended = (face_large1 * mask3 + body_crop * (1 - mask3)).astype(np.uint8)
+
+        # 6. past back
+        out = body_cpy.copy()
+        out[y_s:y_e, x_s:x_e] = blended
+
+        # 7.return[H, W, 3],RGB
+        return out
 
     def generate_idle_frame(self, idx: int) -> np.ndarray:
         """ 生成空闲帧 保持自然的静态画面 """
