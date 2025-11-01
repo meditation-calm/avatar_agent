@@ -161,7 +161,7 @@ class HandlerTTS(HandlerBase, ABC):
                         output_definition=output_definition,
                         speech_id=speech_id,
                         audio_save_path=os.path.join(DirectoryInfo.get_cache_dir(), "output_audio",
-                                                     speech_id + context.synthesizer_idx + ".mp3")
+                                                     speech_id + str(context.synthesizer_idx) + ".mp3")
                     )
                     context.synthesizer = SpeechSynthesizer(
                         model=context.config.model_name,
