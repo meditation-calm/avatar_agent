@@ -561,6 +561,14 @@ class Avatar:
         # mask_array: numpy.ndarray, uint8
         scale = 1.0 / 255.0
         mask_f = mask_array.astype(np.float32) * scale
+
+        # 确保mask_f是二维数组后再创建三通道mask
+        if mask_f.ndim == 3:
+            mask_f = mask_f.squeeze()  # 如果是三维，尝试压缩到二维
+        if mask_f.ndim != 2:
+            # 如果仍然不是二维，创建新的二维mask
+            mask_f = np.ones((face_large1.shape[0], face_large1.shape[1]), dtype=np.float32) * 0.5
+
         mask3 = np.stack([mask_f]*3, axis=2)
 
         # 4. past face into face_large
