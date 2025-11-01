@@ -48,4 +48,6 @@ gdown --id 154JgKpzCPW82qINcVieuPH3fZ2e0P812 -O $CheckpointsDir/face-parse-bisen
 curl -L https://download.pytorch.org/models/resnet18-5c106cde.pth \
   -o $CheckpointsDir/face-parse-bisent/resnet18-5c106cde.pth
 
+git clone https://www.modelscope.cn/HaveAnApplePie/s3fd-619a316812.git $CheckpointsDir/s3fd-619a316812
+
 echo "✅ All weights have been downloaded successfully!"

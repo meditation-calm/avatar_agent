@@ -37,5 +37,7 @@ hf download ByteDance/LatentSync --local-dir %CheckpointsDir%\syncnet --include 
 :: Download face-parse-bisent weights
 hf download ManyOtherFunctions/face-parse-bisent --local-dir %CheckpointsDir%\face-parse-bisent --include "79999_iter.pth" "resnet18-5c106cde.pth"
 
+git clone https://www.modelscope.cn/HaveAnApplePie/s3fd-619a316812.git %CheckpointsDir%\s3fd-619a316812
+
 echo All weights have been downloaded successfully!
 endlocal 
