@@ -533,8 +533,8 @@ class Avatar:
         mask_crop_box = self.mask_coords_list_cycle[idx % len(self.mask_coords_list_cycle)]
         t3 = time.time()
         """ 面部与原始帧融合 """
-        # combine_frame = self.acc_get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
-        combine_frame = get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        combine_frame = self.acc_get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
+        # combine_frame = get_image_blending(ori_frame, res_frame, bbox, mask, mask_crop_box)
         t4 = time.time()
         total_time = t4 - t0
         fps = 1.0 / total_time if total_time > 0 else 0
