@@ -8,6 +8,7 @@ import numpy as np
 from dashscope.audio.tts_v2 import SpeechSynthesizer, ResultCallback, AudioFormat
 from loguru import logger
 from pydantic import BaseModel
+from pydub import AudioSegment
 
 from src.chat_engine.common.handler_base import HandlerBase, HandlerBaseInfo, HandlerDetail, HandlerDataInfo
 from src.chat_engine.contexts.handler_context import HandlerContext
@@ -16,22 +17,37 @@ from src.chat_engine.data_models.chat_data.chat_data_model import ChatData
 from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import ChatEngineConfigModel
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundle, DataBundleDefinition, DataBundleEntry
+from src.engine_utils.directory_info import DirectoryInfo
 from src.handlers.tts.bailian.tts_handler_base import TTSContext, TTSConfig
 
 
 class CosyvoiceCallBack(ResultCallback):
-    def __init__(self, context: TTSContext, output_definition, speech_id):
+    def __init__(self, context: TTSContext, output_definition, speech_id, audio_save_path):
         super().__init__()
         self.context = context
         self.output_definition = output_definition
         self.speech_id = speech_id
         self.temp_bytes = b''
+        self.audio_buffer = b''
+        self.audio_save_path = audio_save_path
 
     def on_open(self) -> None:
         logger.info('bailian cosyvoice connect')
 
     def on_event(self, message) -> None:
         pass
+
+    def save_as_mp3(self):
+        if self.audio_save_path is None:
+            return
+        os.makedirs(os.path.dirname(self.audio_save_path), exist_ok=True)
+        audio_segment = AudioSegment(
+            data=self.audio_buffer,
+            sample_width=2,  # 16-bit
+            frame_rate=24000,  # 24kHz
+            channels=1  # mono
+        )
+        audio_segment.export(self.audio_save_path, format="mp3", bitrate="64k")
 
     def sendAudioData(self, output_audio: np.ndarray = None, avatar_speech_end: bool = False):
         if output_audio is not None:
@@ -43,6 +59,7 @@ class CosyvoiceCallBack(ResultCallback):
 
     def on_data(self, data: bytes) -> None:
         self.temp_bytes += data
+        self.audio_buffer += data
         if len(self.temp_bytes) > 24000:
             # 实现接收合成二进制音频结果的逻辑
             output_audio = np.array(np.frombuffer(self.temp_bytes, dtype=np.int16)).astype(np.float32)/32767
@@ -59,6 +76,8 @@ class CosyvoiceCallBack(ResultCallback):
             self.temp_bytes = b''
         self.sendAudioData(np.zeros(shape=(1, 240), dtype=np.float32), True)
         logger.info(f"bailian cosyvoice speech end")
+        # 保存音频文件
+        # self.save_as_mp3()
 
     def on_error(self, message) -> None:
         logger.error(f'bailian cosyvoice 服务出现异常,请确保参数正确：${message}')
@@ -135,15 +154,21 @@ class HandlerTTS(HandlerBase, ABC):
         text_end = inputs.data.get_meta("avatar_text_end", False)
         try:
             if not text_end:
+                context.input_text = context.input_text + text
                 if context.synthesizer is None:
                     callback = CosyvoiceCallBack(
-                        context=context, output_definition=output_definition, speech_id=speech_id)
+                        context=context,
+                        output_definition=output_definition,
+                        speech_id=speech_id,
+                        audio_save_path=os.path.join(DirectoryInfo.get_cache_dir(), "output_audio",
+                                                     speech_id + context.synthesizer_idx + ".mp3")
+                    )
                     context.synthesizer = SpeechSynthesizer(
                         model=context.config.model_name,
                         voice=context.config.voice,
                         format=AudioFormat.PCM_24000HZ_MONO_16BIT,
                         volume=context.config.volume,
-                        speech_rate= context.config.volume,
+                        speech_rate= context.config.speech_rate,
                         pitch_rate=context.config.pitch_rate,
                         callback=callback)
                 logger.info(f'bailian cosyvoice streaming_call {text}')
@@ -153,6 +178,7 @@ class HandlerTTS(HandlerBase, ABC):
                 context.synthesizer.streaming_call(text)
                 context.synthesizer.streaming_complete()
                 context.synthesizer = None
+                context.synthesizer_idx = context.synthesizer_idx + 1
                 context.input_text = ''
         except Exception as e:
             logger.error(e)

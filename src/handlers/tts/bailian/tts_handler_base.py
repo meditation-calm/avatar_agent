@@ -12,11 +12,11 @@ from src.engine_utils.directory_info import DirectoryInfo
 class TTSConfig(HandlerBaseConfigModel, BaseModel):
     model_name: str = Field(default="cosyvoice-v1")
     api_key: str = Field(default=os.getenv("DASHSCOPE_API_KEY"))
-    voice: str = Field(default="longxiaochun")
-    volume: int = Field(default=50)
-    speed: float = Field(default=1.0)
-    pitch_rate: float = Field(default=1.0)
-    sample_rate: int = Field(default=24000)
+    voice: str = Field(default="longxiaochun")  # 说话人音色。
+    volume: int = Field(default=50)  # 朗读音量，范围是0~100，默认50。
+    speech_rate: float = Field(default=1.0)  # 朗读语速，范围是-500~500，默认是1.0。
+    pitch_rate: float = Field(default=1.0)  # 朗读语调，范围是-500~500，默认是0。
+    sample_rate: int = Field(default=24000)  # 音频采样率，默认为16000 Hz。
 
 
 class TTSContext(HandlerContext):
@@ -24,11 +24,5 @@ class TTSContext(HandlerContext):
         super().__init__(session_id)
         self.config: Optional[TTSConfig] = None
         self.input_text = ''
-        self.dump_audio = False
-        self.audio_dump_file = None
-        if self.dump_audio:
-            localtime = time.localtime()
-            dump_file_path = os.path.join(DirectoryInfo.get_cache_dir(),
-                                          f"dump_avatar_audio_{self.session_id}_{localtime.tm_hour}_{localtime.tm_min}.pcm")
-            self.audio_dump_file = open(dump_file_path, "wb")
         self.synthesizer = None
+        self.synthesizer_idx = 0  # 合成索引
