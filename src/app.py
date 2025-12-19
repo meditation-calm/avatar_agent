@@ -5,6 +5,7 @@ import gradio
 import uvicorn
 from fastapi import FastAPI
 from loguru import logger
+from fastapi.middleware.cors import CORSMiddleware
 
 from chat_engine.chat_engine import ChatEngine
 from engine_utils.directory_info import DirectoryInfo
@@ -25,6 +26,14 @@ def parse_args():
 
 def setup_demo():
     app = FastAPI()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
     with gradio.Blocks(title="Audio Video Streaming") as gradio_block:
         with gradio.Column():
