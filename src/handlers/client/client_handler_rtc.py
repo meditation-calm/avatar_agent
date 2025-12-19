@@ -107,7 +107,7 @@ class ClientHandlerRtc(ClientHandlerBase):
             turn_entity = RTCProvider().prepare_rtc_configuration(self.engine_config.turn_config)
 
         webrtc = Stream(
-            modality="audio",
+            modality="audio-video",
             mode="send-receive",
             time_limit=self.handler_config.connection_ttl,
             rtc_configuration=turn_entity.rtc_configuration if turn_entity is not None else None,
