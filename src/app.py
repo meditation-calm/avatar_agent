@@ -30,7 +30,7 @@ def setup_demo():
         with gradio.Column():
             with gradio.Group() as rtc_container:
                 pass
-    gradio.mount_gradio_app(app, gradio_block, "/")
+    gradio.mount_gradio_app(app, gradio_block, "/fastrtc")
     return app, gradio_block, rtc_container
 
 
