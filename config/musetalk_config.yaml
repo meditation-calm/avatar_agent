@@ -13,6 +13,7 @@ default:
     handler_configs:
       RtcClient:
         module: client/client_handler_rtc
+        concurrent_limit: 2
         turn_config:
           turn_provider: "turn_server"
           urls: [ "turn:121.40.166.120:3478" ]
@@ -56,6 +57,6 @@ default:
         fps: 25
         batch_size: 20
         bbox_shift: -7
-        avatar_video_path: "config/video/book.mp4"
+        avatar_video_path: "config/video/student.mp4"
 
 
