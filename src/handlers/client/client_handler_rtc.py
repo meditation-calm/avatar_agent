@@ -161,6 +161,9 @@ class ClientHandlerRtc(ClientHandlerBase):
 
     def create_handler_detail(self, _session_context, _handler_context):
         inputs = {
+            ChatDataType.KEYWORD_TEXT: HandlerDataInfo(
+                type=ChatDataType.KEYWORD_TEXT
+            ),
             ChatDataType.HUMAN_TEXT: HandlerDataInfo(
                 type=ChatDataType.HUMAN_TEXT
             ),

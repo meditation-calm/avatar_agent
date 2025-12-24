@@ -43,9 +43,7 @@ class ASRHandler(HandlerBase, ABC):
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
         definition = DataBundleDefinition()
-        definition.add_entry(DataBundleEntry.create_audio_entry(
-            "avatar_audio", 1, 24000
-        ))
+        definition.add_entry(DataBundleEntry.create_text_entry("human_text"))
         inputs = {
             ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
                 type=ChatDataType.HUMAN_AUDIO,
@@ -93,6 +91,9 @@ class ASRHandler(HandlerBase, ABC):
         audio = inputs.data.get_main_data()
         """ 获取语音ID，如果不存在则使用会话ID """
         speech_id = inputs.data.get_meta("speech_id", context.session_id)
+        """ 检查是否开启关键字检测，开启后关键字检测推送音频有效(忽略vad音频) """
+        if context.shared_states.enable_keyword and not inputs.data.get_meta("keyword_audio", False):
+            return
 
         if audio is not None:
             audio = audio.squeeze()

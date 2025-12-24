@@ -15,7 +15,6 @@ from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import ChatEngineConfigModel
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundleDefinition, DataBundleEntry, DataBundle
 from src.engine_utils.directory_info import DirectoryInfo
-from src.engine_utils.general_slicer import slice_data
 from src.handlers.kws.xiaoyun.kws_handler_base import KwsConfig, KwsContext
 
 
@@ -94,7 +93,7 @@ class KwsHandler(HandlerBase, ABC):
 
     def handle(self, context: HandlerContext, inputs: ChatData,
                output_definitions: Dict[ChatDataType, HandlerDataInfo]):
-        """ 处理输入音频数据，执行语音活动检测并生成输出 """
+        """ 输入音频xiaoyun唤醒词检测 """
         context = cast(KwsContext, context)
         output_definition = output_definitions.get(ChatDataType.HUMAN_AUDIO).definition
         """ 检查是否启用 KWS，未启用则直接返回 """
@@ -105,21 +104,11 @@ class KwsHandler(HandlerBase, ABC):
         audio = inputs.data.get_main_data()
         if audio is not None:
             audio = audio.squeeze()
-            for audio_segment in slice_data(context.audio_slice_context, audio):
-                if audio_segment is None or audio_segment.shape[0] == 0:
-                    continue
-                context.output_audios.append(audio_segment)
+            context.output_audios.append(audio)
         speech_end = inputs.data.get_meta("human_speech_end", False)
         if not speech_end:
             return
 
-        remainder_audio = context.audio_slice_context.flush()
-        if remainder_audio is not None:
-            if remainder_audio.shape[0] < context.audio_slice_context.slice_size:
-                remainder_audio = np.concatenate(
-                    [remainder_audio,
-                     np.zeros(shape=(context.audio_slice_context.slice_size - remainder_audio.shape[0]))])
-                context.output_audios.append(remainder_audio)
         output_audio = np.concatenate(context.output_audios)
         context.output_audios.clear()
         """ 检测语音唤醒 """

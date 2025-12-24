@@ -17,3 +17,4 @@ torchvision==0.15.2
 torchaudio==2.0.2
 openai>=1.72.0
 modelscope>=1.25.0
+sherpa_onnx

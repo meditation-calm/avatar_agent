@@ -1,0 +1,13 @@
+x ià y è @下一页
+sh àng y è @上一页
+f ǎn h uí @返回
+h uí d ào sh ǒu y è @回到首页
+z ài j iàn @再见
+d ǎ k āi d iàn z ǐ t ú sh ū @打开电子图书
+d ǎ k āi y ǒu sh ēng d ú w ù @打开有声读物
+d ǎ k āi y ǒu sh ēng sh ū @打开有声书
+m ěi r ì t uī j iàn @每日推荐
+j īn r ì t uī j iàn @今日推荐
+g uān b ì @关闭
+y uè d ú @阅读
+b ō f àng @播放

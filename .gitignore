@@ -21,6 +21,7 @@ venv.bak/
 
 models/*
 !models/silero_vad/
+!models/sherpa_kws/
 cache/*
 !cache/temp_file_here.txt
 test

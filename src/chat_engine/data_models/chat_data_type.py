@@ -11,6 +11,8 @@ class ChatDataType(Enum):
 
     """ 无数据或空数据类型 """
     NONE = ("none", EngineChannelType.NONE)
+    """ 关键字文本数据 """
+    KEYWORD_TEXT = ("keyword_text", EngineChannelType.TEXT)
     """ 人类用户输入的文本数据 """
     HUMAN_TEXT = ("human_text", EngineChannelType.TEXT)
     """ 人类用户输入的语音活动数据 """

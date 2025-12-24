@@ -20,6 +20,7 @@ class SharedStates:
     active: bool = False
     enable_vad: bool = True
     enable_kws: bool = False
+    enable_keyword: bool = False
 
 
 class SessionContext(object):

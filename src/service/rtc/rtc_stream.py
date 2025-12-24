@@ -244,7 +244,14 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 if chat_data is None or chat_data.data is None:
                     continue
                 logger.info(f"Got chat data {str(chat_data)}")
-                current_role = 'human' if chat_data.type == ChatDataType.HUMAN_TEXT else 'avatar'
+                if chat_data.type == ChatDataType.HUMAN_TEXT:
+                    current_role = 'human'
+                elif chat_data.type == ChatDataType.AVATAR_TEXT:
+                    current_role = 'avatar'
+                elif chat_data.type == ChatDataType.KEYWORD_TEXT:
+                    current_role = 'keyword'
+                else:
+                    current_role = 'unknown'
                 chat_id = uuid.uuid4().hex if current_role != role else chat_id
                 role = current_role
                 self.chat_channel.send(json.dumps({'type': 'chat', 'message': chat_data.data.get_main_data(),
