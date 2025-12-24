@@ -33,7 +33,6 @@ default:
       SherpaKws:
         module: kws/sherpa/kws_handler_sherpa
         model_name: "sherpa_kws"
-        num_threads: 2
         keywords_file: "library_keyword.txt"
       SenseVoice:
         module: asr/sensevoice/asr_handler_sensevoice

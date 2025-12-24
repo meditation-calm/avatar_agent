@@ -1,6 +1,6 @@
 import os
 from abc import ABC
-from typing import cast, Dict
+from typing import cast, Dict, Optional
 
 import numpy as np
 import sherpa_onnx
@@ -24,6 +24,7 @@ class KWSHandler(HandlerBase, ABC):
     def __init__(self):
         super().__init__()
         self.model = None
+        self.kws_stream = None
 
     def get_handler_info(self):
         """ 返回处理器的基本信息 """
@@ -43,10 +44,12 @@ class KWSHandler(HandlerBase, ABC):
             joiner=os.path.join(model_path, handler_config.joiner),
             num_threads=handler_config.num_threads,
             sample_rate=handler_config.sample_rate,
+            keywords_score=handler_config.keywords_score,
             keywords_threshold=handler_config.keywords_threshold,
             keywords_file=os.path.join(model_path, handler_config.keywords_file),
             provider="cpu"
         )
+        self.kws_stream = self.model.create_stream()
         logger.info(f"Loaded Sherpa KWS model from {model_path}")
 
     def create_context(self, session_context: SessionContext, handler_config=None) -> HandlerContext:
@@ -60,6 +63,7 @@ class KWSHandler(HandlerBase, ABC):
         context.shared_states.enable_keyword = True
         if isinstance(handler_config, KwsConfig):
             context.config = handler_config
+            context.sample_rate = handler_config.sample_rate
         return context
 
     def start_context(self, session_context, handler_context):
@@ -114,30 +118,35 @@ class KWSHandler(HandlerBase, ABC):
         output_audio = np.concatenate(context.output_audios)
         context.output_audios.clear()
 
-        sample_rate = context.config.sample_rate
-        kws_stream = self.model.create_stream()
-        tail_paddings = np.zeros(int(0.66 * sample_rate), dtype=np.float32)
-        kws_stream.accept_waveform(sample_rate, output_audio)
-        kws_stream.accept_waveform(sample_rate, tail_paddings)
-        kws_stream.input_finished()
-        keyword = None
-        while self.model.is_ready(kws_stream):
-            self.model.decode_stream(kws_stream)
-            result = self.model.get_result(kws_stream)
-            if result != '':
+        kws_audio = output_audio
+        if output_audio.dtype != np.float32:
+            kws_audio = kws_audio.astype(np.float32)
+        kws_audio = kws_audio / 32768.0 if kws_audio.max() > 1.0 else kws_audio
+
+        """ keyword 关键词检测 """
+        sample_rate = context.sample_rate
+        tail_paddings = np.zeros(int(1 * sample_rate), dtype=np.float32)
+        self.kws_stream.accept_waveform(sample_rate, kws_audio)
+        self.kws_stream.accept_waveform(sample_rate, tail_paddings)
+        self.kws_stream.input_finished()
+        keyword: Optional[str] = None
+        while self.model.is_ready(self.kws_stream):
+            self.model.decode_stream(self.kws_stream)
+            result = self.model.get_result(self.kws_stream)
+            logger.info(f"KWS result: {result}")
+            if result and result.strip() != '':
                 keyword = result
-                self.model.reset_stream(kws_stream)
-        if keyword is not None:
+        self.model.reset_stream(self.kws_stream)
+        if keyword:
             """ 检测到关键词，返回指令，重新启用vad """
             logger.info(f"Keyword detected: {keyword}")
-            context.shared_states.enable_vad = True
             data_bundle = DataBundle(keyword_output_definition)
             data_bundle.set_main_data(keyword)
             chat_data = ChatData(type=ChatDataType.KEYWORD_TEXT, data=data_bundle)
             context.submit_data(chat_data)
+            context.shared_states.enable_vad = True
         else:
             logger.info("No keyword detected")
-            context.shared_states.enable_vad = False
             speech_id = f"speech-{context.session_id}"
             data_bundle = DataBundle(audio_output_definition)
             if output_audio.dtype != np.float32:
