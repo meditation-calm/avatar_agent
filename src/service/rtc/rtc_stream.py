@@ -17,8 +17,6 @@ from src.chat_engine.data_models.chat_signal_type import ChatSignalType, ChatSig
 from src.engine_utils.interval_counter import IntervalCounter
 from aiortc.codecs import vpx
 
-from src.routes.user import verify_token
-
 vpx.DEFAULT_BITRATE = 5000000
 vpx.MIN_BITRATE = 1000000
 vpx.MAX_BITRATE = 10000000
@@ -278,7 +276,15 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 return
             logger.info(f'on_chat_datachannel: {message}')
 
-            if message['type'] == 'stop_chat':
+            if message['type'] == 'init':
+                sessionId = message['sessionId']
+                if sessionId is not None and sessionId != '':
+                    old_session_id = self.session_id
+                    self.session_id = sessionId
+                    if old_session_id in self.streams:
+                        del self.streams[old_session_id]
+                    self.streams[sessionId] = self
+            elif message['type'] == 'stop_chat':
                 self.client_session_delegate.emit_signal(
                     ChatSignal(
                         type=ChatSignalType.INTERRUPT,
@@ -305,9 +311,6 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                     message['data'],
                     loopback=True
                 )
-            # else:
-
-            # channel.send(json.dumps({"type": "chat", "unique_id": unique_id, "message": message}))
 
     async def on_chat_datachannel(self, message: Dict, channel):
         # {"type":"chat",id:"标识属于同一段话", "message":"Hello, world!"}
