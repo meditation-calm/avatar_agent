@@ -6,6 +6,7 @@ import requests
 from loguru import logger
 
 from src.handlers.llm.dify.llm_handler_base import DifyContext
+from src.routes.user import get_user
 
 
 class DifyRequest:
@@ -64,13 +65,18 @@ class DifyRequest:
                             "upload_file_id": file_id
                         })
 
+        inputs = {}
+        user = get_user(context.session_id)
+        if user:
+            inputs.update(user)
         payload = {
-            "inputs": {},
+            "inputs": inputs,
             "query": query,
             "response_mode": context.config.response_mode,
             "conversation_id": context.conversation_id,
             "user": context.session_id
         }
+        logger.info(f"Dify API request payload: {payload}")
 
         if files and len(files) > 0:
             payload["files"] = files

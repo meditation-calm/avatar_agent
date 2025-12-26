@@ -18,3 +18,5 @@ torchaudio==2.0.2
 openai>=1.72.0
 modelscope>=1.25.0
 sherpa_onnx
+
+PyJWT==2.8.0

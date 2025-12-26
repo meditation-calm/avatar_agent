@@ -13,6 +13,8 @@ from service.utils.logger_utils import config_loggers
 from service.utils.config_loader import load_configs
 from service.utils.ssl_helpers import create_ssl_context
 
+from src.routes.user import router as user_router
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -24,7 +26,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def setup_demo():
+def setup():
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
@@ -34,6 +36,8 @@ def setup_demo():
         allow_headers=["*"],
         expose_headers=["*"],
     )
+
+    app.include_router(user_router, prefix="/user", tags=["user"])
 
     with gradio.Blocks(title="Audio Video Streaming") as gradio_block:
         with gradio.Column():
@@ -65,13 +69,13 @@ def main():
 
     config_loggers(logger_config)
     chat_engine = ChatEngine()
-    demo_app, ui, parent_block = setup_demo()
+    app, ui, parent_block = setup()
 
-    chat_engine.initialize(engine_config, app=demo_app, ui=ui, parent_block=parent_block)
+    chat_engine.initialize(engine_config, app=app, ui=ui, parent_block=parent_block)
 
     ssl_context = create_ssl_context(args, service_config)
 
-    uvicorn_config = uvicorn.Config(demo_app, host=service_config.host, port=service_config.port, **ssl_context)
+    uvicorn_config = uvicorn.Config(app, host=service_config.host, port=service_config.port, **ssl_context)
     server = OpenAvatarChatWebServer(chat_engine, uvicorn_config)
     server.run()
 

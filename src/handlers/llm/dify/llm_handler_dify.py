@@ -1,8 +1,4 @@
 import re
-import json
-import PIL
-import numpy as np
-import requests
 from typing import Dict, Optional, cast
 from loguru import logger
 from pydantic import BaseModel
