@@ -279,11 +279,14 @@ class RtcStream(AsyncAudioVideoStreamHandler):
             if message['type'] == 'init':
                 sessionId = message['sessionId']
                 if sessionId is not None and sessionId != '':
-                    old_session_id = self.session_id
                     self.session_id = sessionId
-                    if old_session_id in self.streams:
-                        del self.streams[old_session_id]
-                    self.streams[sessionId] = self
+                    if hasattr(self.client_session_delegate, 'data_submitter'):
+                        data_submitter = getattr(self.client_session_delegate, 'data_submitter')
+                        if hasattr(data_submitter, 'session_context'):
+                            session_context = getattr(data_submitter, 'session_context')
+                            if session_context is not None:
+                                session_context.session_info.session_id = sessionId
+
             elif message['type'] == 'stop_chat':
                 self.client_session_delegate.emit_signal(
                     ChatSignal(
