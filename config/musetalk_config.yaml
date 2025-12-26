@@ -13,7 +13,7 @@ default:
     handler_configs:
       RtcClient:
         module: client/client_handler_rtc
-        concurrent_limit: 2
+        concurrent_limit: 5
         turn_config:
           turn_provider: "turn_server"
           urls: [ "turn:121.40.166.120:3478" ]
