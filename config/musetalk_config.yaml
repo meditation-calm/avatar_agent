@@ -8,12 +8,12 @@ default:
     cert_key: "ssl_certs/localhost.key"
   chat_engine:
     model_root: "models"
-    concurrent_limit: 5
     handler_search_path:
       - "src/handlers"
     handler_configs:
       RtcClient:
         module: client/client_handler_rtc
+        concurrent_limit: 5
         turn_config:
           turn_provider: "turn_server"
           urls: [ "turn:121.40.166.120:3478" ]
