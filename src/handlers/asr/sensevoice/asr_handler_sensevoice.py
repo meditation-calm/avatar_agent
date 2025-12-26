@@ -142,6 +142,7 @@ class ASRHandler(HandlerBase, ABC):
             """ 如果识别结果为空，则重新启用VAD """
             context.shared_states.enable_vad = True
             return
+        context.shared_states.enable_vad = True
         """ 生成文本输出和结束标记输出 """
         """ 返回识别结果 """
         output = DataBundle(output_definition)

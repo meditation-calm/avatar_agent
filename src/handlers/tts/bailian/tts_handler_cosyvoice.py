@@ -152,6 +152,27 @@ class HandlerTTS(HandlerBase, ABC):
             text = re.sub(r"<\|.*?\|>", "", text)
 
         text_end = inputs.data.get_meta("avatar_text_end", False)
+        if not text_end:
+            first_ignore_text = False
+            left_idx = text.find("{")
+            right_idx = text.find("}")
+            if left_idx != -1 and right_idx != -1:
+                left_text = text[:left_idx]
+                right_text = text[right_idx + 1:]
+                text = left_text + right_text
+                context.ignore_text = False
+            else:
+                if left_idx != -1:
+                    text = text[:left_idx]
+                    first_ignore_text = True
+                if right_idx != -1:
+                    text = text[right_idx + 1:]
+                    context.ignore_text = False
+            if context.ignore_text and first_ignore_text is False:
+                return
+            if first_ignore_text:
+                context.ignore_text = True
+
         try:
             if not text_end:
                 context.input_text = context.input_text + text
@@ -180,10 +201,12 @@ class HandlerTTS(HandlerBase, ABC):
                 context.synthesizer = None
                 context.synthesizer_idx = context.synthesizer_idx + 1
                 context.input_text = ''
+                context.ignore_text = False
         except Exception as e:
             logger.error(e)
             context.synthesizer.streaming_complete()
             context.synthesizer = None
+            context.ignore_text = False
 
     def destroy_context(self, context: HandlerContext):
         pass

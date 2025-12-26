@@ -17,6 +17,8 @@ from src.chat_engine.data_models.chat_signal_type import ChatSignalType, ChatSig
 from src.engine_utils.interval_counter import IntervalCounter
 from aiortc.codecs import vpx
 
+from src.routes.user import verify_token
+
 vpx.DEFAULT_BITRATE = 5000000
 vpx.MIN_BITRATE = 1000000
 vpx.MAX_BITRATE = 10000000
@@ -85,6 +87,7 @@ class RtcStream(AsyncAudioVideoStreamHandler):
             将新会话添加到 streams 字典中管理
         """
         try:
+            logger.info(f"rtc stream connect kwargs: {kwargs}")
             if self.client_handler_delegate is None:
                 raise Exception("ClientHandlerDelegate is not set.")
             session_id = kwargs.get("webrtc_id", None)
