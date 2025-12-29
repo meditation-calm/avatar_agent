@@ -128,9 +128,8 @@ class RtcStream(AsyncAudioVideoStreamHandler):
             使用 IntervalCounter 记录发送性能
         """
         try:
-            """ 等待参数就绪 """
-            if not self.args_set.is_set():
-                await self.wait_for_args()
+            # if not self.args_set.is_set():
+            # await self.wait_for_args()
 
             if not self.first_audio_emitted:
                 self.client_session_delegate.clear_data()
