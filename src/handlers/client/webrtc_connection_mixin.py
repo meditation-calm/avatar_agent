@@ -152,7 +152,7 @@ class WebRTCConnectionMixin:
 
     async def handle_offer(self, body, set_outputs):
         logger.debug("Starting to handle offer")
-        logger.debug("Offer body %s", body)
+        logger.info("Offer body %s", body)
 
         if body.get("type") == "ice-candidate" and "candidate" in body:
             webrtc_id = body.get("webrtc_id")
@@ -247,7 +247,8 @@ class WebRTCConnectionMixin:
         pc = RTCPeerConnection()
         self.pcs[body["webrtc_id"]] = pc
 
-        logger.info(f"event_handler is StreamHandlerBase: {isinstance(self.event_handler, StreamHandlerBase)}")
+        logger.info(f"event_handler is StreamHandlerBase: {isinstance(self.event_handler, StreamHandlerBase)} "
+                    f"webrtc_id: {body['webrtc_id']}")
         if isinstance(self.event_handler, StreamHandlerBase):
             handler = self.event_handler.copy(webrtc_id=body['webrtc_id'])
             handler.emit = webrtc_error_handler(handler.emit)  # type: ignore
