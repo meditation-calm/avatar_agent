@@ -2,7 +2,6 @@ from typing import Dict, Optional, cast
 
 import gradio
 from fastapi import FastAPI
-from fastrtc import Stream
 from loguru import logger
 
 from src.chat_engine.common.client_handler_base import ClientHandlerBase, ClientSessionDelegate
@@ -14,6 +13,7 @@ from src.chat_engine.data_models.chat_data.chat_data_model import ChatData
 from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import HandlerBaseConfigModel, ChatEngineConfigModel
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundleDefinition, DataBundleEntry, VariableSize
+from src.handlers.client.stream import Stream
 from src.service.rtc.rtc_provider import RTCProvider
 from src.service.rtc.rtc_stream import RtcStream
 from src.handlers.client.client_handler_base import RtcClientSessionDelegate, ClientRtcConfigModel, ClientRtcContext
