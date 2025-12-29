@@ -128,8 +128,9 @@ class RtcStream(AsyncAudioVideoStreamHandler):
             使用 IntervalCounter 记录发送性能
         """
         try:
-            # if not self.args_set.is_set():
-            # await self.wait_for_args()
+            """ 等待参数就绪 """
+            if not self.args_set.is_set():
+                await self.wait_for_args()
 
             if not self.first_audio_emitted:
                 self.client_session_delegate.clear_data()
@@ -276,18 +277,7 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 return
             logger.info(f'on_chat_datachannel: {message}')
 
-            if message['type'] == 'init':
-                sessionId = message['sessionId']
-                if sessionId is not None and sessionId != '':
-                    self.session_id = sessionId
-                    if hasattr(self.client_session_delegate, 'data_submitter'):
-                        data_submitter = getattr(self.client_session_delegate, 'data_submitter')
-                        if hasattr(data_submitter, 'session_context'):
-                            session_context = getattr(data_submitter, 'session_context')
-                            if session_context is not None:
-                                session_context.session_info.session_id = sessionId
-
-            elif message['type'] == 'stop_chat':
+            if message['type'] == 'stop_chat':
                 self.client_session_delegate.emit_signal(
                     ChatSignal(
                         type=ChatSignalType.INTERRUPT,
