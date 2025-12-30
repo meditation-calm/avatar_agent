@@ -130,7 +130,6 @@ class ClientHandlerRtc(ClientHandlerBase):
 
         @fastapi.post('/webrtc/disconnect/{webrtc_id}')
         async def disconnect_rtc(webrtc_id: str):
-            self.rtc_streamer_factory.shutdown_session(webrtc_id)
             success = webrtc.disconnect_webrtc(webrtc_id)
             if success:
                 return {"status": "success", "message": f"Disconnected {webrtc_id}"}

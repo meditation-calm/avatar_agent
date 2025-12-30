@@ -320,11 +320,3 @@ class RtcStream(AsyncAudioVideoStreamHandler):
         self.client_session_delegate = None
         if factory.client_handler_delegate is not None:
             factory.client_handler_delegate.stop_session(self.session_id)
-
-    def shutdown_session(self, session_id: str):
-        """ 通过 session_id 清理特定会话 """
-        if session_id in self.streams:
-            stream = self.streams[session_id]
-            stream.shutdown()
-            del self.streams[session_id]
-            logger.info(f"Shutdown session {session_id}")
