@@ -181,7 +181,8 @@ class HandlerManager:
                 logger.error(f"Handler {name} provides invalid config model {base_info.config_model}")
                 raise ValueError(f"Handler {name} provides invalid config model {base_info.config_model}")
             config: HandlerBaseConfigModel = base_info.config_model.model_validate(raw_config)
-            config.concurrent_limit = self.concurrent_limit
+            """ 配置独立项控制最大并发数 """
+            # config.concurrent_limit = self.concurrent_limit
             registry.base_info = base_info
             registry.handler = handler
             registry.handler_config = config
