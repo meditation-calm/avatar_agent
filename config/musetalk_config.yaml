@@ -56,6 +56,7 @@ default:
         fps: 25
         batch_size: 20
         bbox_shift: -7
+        gpu_id: 1
         avatar_video_path: "config/video/book.mp4"
 
 
