@@ -128,6 +128,20 @@ class ClientHandlerRtc(ClientHandlerBase):
                 "rtc_configuration": turn_entity.rtc_configuration if turn_entity is not None else None,
             }
 
+        @fastapi.post('/webrtc/disconnect/{webrtc_id}')
+        async def disconnect_rtc(webrtc_id: str):
+            self.rtc_streamer_factory.shutdown_session(webrtc_id)
+            success = webrtc.disconnect_webrtc(webrtc_id)
+            if success:
+                return {"status": "success", "message": f"Disconnected {webrtc_id}"}
+            else:
+                return {"status": "failed", "message": f"Failed to disconnect {webrtc_id}"}
+
+        @fastapi.get('/webrtc/active')
+        async def rtc_active():
+            connections = webrtc.get_active_connections()
+            return {"connections": connections}
+
         # 渲染默认fastrtc页面
         with ui:
             webrtc.ui.render()

@@ -492,3 +492,43 @@ class WebRTCConnectionMixin:
             "sdp": pc.localDescription.sdp,
             "type": pc.localDescription.type,
         }
+
+    def disconnect_webrtc(self, webrtc_id: str) -> bool:
+        """
+        基于 webrtc_id 主动断开 RTC 连接
+
+        Args:
+            webrtc_id: WebRTC 连接的唯一标识符
+
+        Returns:
+            bool: 操作是否成功
+        """
+        if webrtc_id not in self.pcs:
+            logger.warning(f"No active connection found for webrtc_id: {webrtc_id}")
+            return False
+
+        try:
+            # 获取连接对象
+            pc = self.pcs[webrtc_id]
+
+            # 关闭连接
+            asyncio.create_task(pc.close())
+
+            # 执行清理操作
+            self.clean_up(webrtc_id)
+
+            logger.info(f"Successfully disconnected webrtc_id: {webrtc_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error disconnecting webrtc_id {webrtc_id}: {e}")
+            return False
+
+    def get_active_connections(self) -> list[str]:
+        """
+        获取当前活跃的连接列表
+
+        Returns:
+            list[str]: 活跃连接的 webrtc_id 列表
+        """
+        return list(self.pcs.keys())
