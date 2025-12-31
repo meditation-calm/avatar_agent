@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os.path
 from typing import Dict, Optional, cast
@@ -5,6 +6,7 @@ from typing import Dict, Optional, cast
 import gradio
 from fastapi import FastAPI
 from loguru import logger
+from starlette.staticfiles import StaticFiles
 
 from src.chat_engine.common.client_handler_base import ClientHandlerBase, ClientSessionDelegate
 from src.chat_engine.common.engine_channel_type import EngineChannelType
@@ -120,6 +122,12 @@ class ClientHandlerRtc(ClientHandlerBase):
         webrtc.mount(fastapi)
         logger.info(f"RTC streamer ready modality: ${webrtc.modality} mode: ${webrtc.mode}")
 
+        # 添加静态资源目录
+        config_static_path = os.path.join(DirectoryInfo.get_project_dir(), "static")
+        if os.path.exists(config_static_path):
+            fastapi.mount("/static", StaticFiles(directory=config_static_path), name="config_static")
+            logger.info(f"Static files mounted at /static from {config_static_path}")
+
         @fastapi.get('/health')
         async def health():
             return {"status": "healthy", "service": "rtc"}
@@ -153,12 +161,20 @@ class ClientHandlerRtc(ClientHandlerBase):
 
         @fastapi.post('/webrtc/disconnect/{webrtc_id}')
         async def disconnect_rtc(webrtc_id: str):
-            self.rtc_streamer_factory.shutdown_session(webrtc_id)
-            success = await webrtc.disconnect_webrtc(webrtc_id)
-            if success:
-                return {"status": "success", "message": f"Disconnected {webrtc_id}"}
-            else:
-                return {"status": "failed", "message": f"Failed to disconnect {webrtc_id}"}
+            try:
+                success = await webrtc.disconnect_webrtc(webrtc_id)
+                if self.rtc_streamer_factory:
+                    self.rtc_streamer_factory.shutdown_session(webrtc_id)
+                await asyncio.sleep(0.1)
+                if success:
+                    return {"status": "success", "message": f"Disconnected {webrtc_id}"}
+                else:
+                    return {"status": "failed", "message": f"Failed to disconnect {webrtc_id}"}
+            except Exception as e:
+                logger.error(f"Error during disconnect {webrtc_id}: {e}")
+                if self.rtc_streamer_factory:
+                    self.rtc_streamer_factory.shutdown_session(webrtc_id)
+                return {"status": "error", "message": str(e)}
 
         @fastapi.get('/webrtc/active')
         async def rtc_active():

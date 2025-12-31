@@ -85,7 +85,6 @@ class CosyvoiceCallBack(ResultCallback):
             self.temp_bytes = b''
         self.sendAudioData(np.zeros(shape=(1, 240), dtype=np.float32), True)
         logger.info(f"bailian cosyvoice speech end")
-        self.sendEventData({"handler": "tts", "event": "end"})
         # 保存音频文件
         # self.save_as_mp3()
 
@@ -96,6 +95,7 @@ class CosyvoiceCallBack(ResultCallback):
 
     def on_close(self) -> None:
         logger.info('bailian cosyvoice close')
+        self.sendEventData({"handler": "tts", "event": "end"})
 
 
 class HandlerTTS(HandlerBase, ABC):

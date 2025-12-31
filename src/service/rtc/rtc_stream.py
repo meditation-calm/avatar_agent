@@ -238,8 +238,8 @@ class RtcStream(AsyncAudioVideoStreamHandler):
         self.chat_channel = channel
 
         async def process_chat_history():
-            role = None
-            chat_id = None
+            chat_id = uuid.uuid4().hex
+            human_id = uuid.uuid4().hex
             while not self.quit.is_set():
                 chat_data = await self.client_session_delegate.get_data(EngineChannelType.TEXT)
                 if chat_data is None or chat_data.data is None:
@@ -261,10 +261,9 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                         pass
                 else:
                     current_role = 'human'
-                chat_id = uuid.uuid4().hex if current_role != role else chat_id
-                role = current_role
+                current_id = human_id if current_role == 'human' else chat_id
                 self.chat_channel.send(json.dumps({'type': current_type, 'message': message,
-                                                   'id': chat_id, 'role': current_role}))
+                                                   'id': current_id, 'role': current_role}))
 
         asyncio.create_task(process_chat_history())
 
