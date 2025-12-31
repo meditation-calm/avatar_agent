@@ -44,6 +44,8 @@ class ASRHandler(HandlerBase, ABC):
                            context: HandlerContext) -> HandlerDetail:
         definition = DataBundleDefinition()
         definition.add_entry(DataBundleEntry.create_text_entry("human_text"))
+        event_definition = DataBundleDefinition()
+        event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
         inputs = {
             ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
                 type=ChatDataType.HUMAN_AUDIO,
@@ -53,7 +55,11 @@ class ASRHandler(HandlerBase, ABC):
             ChatDataType.HUMAN_TEXT: HandlerDataInfo(
                 type=ChatDataType.HUMAN_TEXT,
                 definition=definition,
-            )
+            ),
+            ChatDataType.HUMAN_EVENT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_EVENT,
+                definition=event_definition,
+            ),
         }
         return HandlerDetail(
             inputs=inputs, outputs=outputs,
@@ -81,6 +87,7 @@ class ASRHandler(HandlerBase, ABC):
                output_definitions: Dict[ChatDataType, HandlerDataInfo]):
         """ 处理输入音频数据并生成文本输出 """
         output_definition = output_definitions.get(ChatDataType.HUMAN_TEXT).definition
+        event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
         context = cast(ASRContext, context)
         """ 检查是否语言唤醒 """
         if context.shared_states.enable_kws:
@@ -109,6 +116,10 @@ class ASRHandler(HandlerBase, ABC):
         speech_end = inputs.data.get_meta("human_speech_end", False)
         if not speech_end:
             return
+
+        event = DataBundle(event_definition)
+        event.set_main_data({"handler": "asr", "event": "start"})
+        context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
 
         # prefill remainder audio in slice context
         """
@@ -148,13 +159,17 @@ class ASRHandler(HandlerBase, ABC):
         output.set_main_data(output_text)
         output.add_meta('human_text_end', False)
         output.add_meta('speech_id', speech_id)
-        yield output
+        context.submit_data(ChatData(type=ChatDataType.HUMAN_TEXT, data=output))
         """ 标记结束 """
         end_output = DataBundle(output_definition)
         end_output.set_main_data('')
         end_output.add_meta("human_text_end", True)
         end_output.add_meta("speech_id", speech_id)
-        yield end_output
+        context.submit_data(ChatData(type=ChatDataType.HUMAN_TEXT, data=end_output))
+        """ 结束事件 """
+        event = DataBundle(event_definition)
+        event.set_main_data({"handler": "asr", "event": "end"})
+        context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
 
     def destroy_context(self, context: HandlerContext):
         pass

@@ -15,8 +15,8 @@ class ChatDataType(Enum):
     KEYWORD_TEXT = ("keyword_text", EngineChannelType.TEXT)
     """ 人类用户输入的文本数据 """
     HUMAN_TEXT = ("human_text", EngineChannelType.TEXT)
-    """ 人类用户输入的语音活动数据 """
-    HUMAN_VOICE_ACTIVITY = ("human_vad", EngineChannelType.EVENT)
+    """ 流程处理事件(开始/结束) """
+    HUMAN_EVENT = ("human_event", EngineChannelType.TEXT)
     """ 麦克风的原始音频数据 """
     MIC_AUDIO = ("mic_audio", EngineChannelType.AUDIO)
     """ 处理后的人类用户音频数据 """

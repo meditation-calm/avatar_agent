@@ -204,6 +204,9 @@ class ClientHandlerRtc(ClientHandlerBase):
             ChatDataType.HUMAN_TEXT: HandlerDataInfo(
                 type=ChatDataType.HUMAN_TEXT
             ),
+            ChatDataType.HUMAN_EVENT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_EVENT
+            ),
             ChatDataType.AVATAR_TEXT: HandlerDataInfo(
                 type=ChatDataType.AVATAR_TEXT
             ),

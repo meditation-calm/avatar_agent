@@ -22,10 +22,11 @@ from src.handlers.tts.bailian.tts_handler_base import TTSContext, TTSConfig
 
 
 class CosyvoiceCallBack(ResultCallback):
-    def __init__(self, context: TTSContext, output_definition, speech_id, audio_save_path):
+    def __init__(self, context: TTSContext, output_definition, event_definition, speech_id, audio_save_path):
         super().__init__()
         self.context = context
         self.output_definition = output_definition
+        self.event_definition = event_definition
         self.speech_id = speech_id
         self.temp_bytes = b''
         self.audio_buffer = b''
@@ -33,6 +34,7 @@ class CosyvoiceCallBack(ResultCallback):
 
     def on_open(self) -> None:
         logger.info('bailian cosyvoice connect')
+        self.sendEventData({"handler": "tts", "event": "start"})
 
     def on_event(self, message) -> None:
         pass
@@ -55,14 +57,21 @@ class CosyvoiceCallBack(ResultCallback):
             output.set_main_data(output_audio)
             output.add_meta("avatar_speech_end", avatar_speech_end)
             output.add_meta("speech_id", self.speech_id)
-            self.context.submit_data(output)
+            self.context.submit_data(ChatData(type=ChatDataType.AVATAR_AUDIO, data=output))
+
+    def sendEventData(self, event_data: Dict[str, str] = None):
+        if event_data is not None:
+            """ 结束事件 """
+            event = DataBundle(self.event_definition)
+            event.set_main_data(event_data)
+            self.context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
 
     def on_data(self, data: bytes) -> None:
         self.temp_bytes += data
         self.audio_buffer += data
         if len(self.temp_bytes) > 24000:
             # 实现接收合成二进制音频结果的逻辑
-            output_audio = np.array(np.frombuffer(self.temp_bytes, dtype=np.int16)).astype(np.float32)/32767
+            output_audio = np.array(np.frombuffer(self.temp_bytes, dtype=np.int16)).astype(np.float32) / 32767
             # librosa.load(io.BytesIO(self.temp_bytes), sr=None)[0]
             output_audio = output_audio[np.newaxis, ...]
             self.sendAudioData(output_audio, False)
@@ -70,12 +79,13 @@ class CosyvoiceCallBack(ResultCallback):
 
     def on_complete(self) -> None:
         if len(self.temp_bytes) > 0:
-            output_audio = np.array(np.frombuffer(self.temp_bytes, dtype=np.int16)).astype(np.float32)/32767
+            output_audio = np.array(np.frombuffer(self.temp_bytes, dtype=np.int16)).astype(np.float32) / 32767
             output_audio = output_audio[np.newaxis, ...]
             self.sendAudioData(output_audio, False)
             self.temp_bytes = b''
         self.sendAudioData(np.zeros(shape=(1, 240), dtype=np.float32), True)
         logger.info(f"bailian cosyvoice speech end")
+        self.sendEventData({"handler": "tts", "event": "end"})
         # 保存音频文件
         # self.save_as_mp3()
 
@@ -104,6 +114,8 @@ class HandlerTTS(HandlerBase, ABC):
         definition.add_entry(DataBundleEntry.create_audio_entry(
             "avatar_audio", 1, self.sample_rate
         ))
+        event_definition = DataBundleDefinition()
+        event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
         inputs = {
             ChatDataType.AVATAR_TEXT: HandlerDataInfo(
                 type=ChatDataType.AVATAR_TEXT,
@@ -113,7 +125,11 @@ class HandlerTTS(HandlerBase, ABC):
             ChatDataType.AVATAR_AUDIO: HandlerDataInfo(
                 type=ChatDataType.AVATAR_AUDIO,
                 definition=definition,
-            )
+            ),
+            ChatDataType.HUMAN_EVENT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_EVENT,
+                definition=event_definition,
+            ),
         }
         return HandlerDetail(
             inputs=inputs, outputs=outputs,
@@ -141,6 +157,7 @@ class HandlerTTS(HandlerBase, ABC):
     def handle(self, context: HandlerContext, inputs: ChatData,
                output_definitions: Dict[ChatDataType, HandlerDataInfo]):
         output_definition = output_definitions.get(ChatDataType.AVATAR_AUDIO).definition
+        event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
         context = cast(TTSContext, context)
         if inputs.type != ChatDataType.AVATAR_TEXT:
             return
@@ -152,6 +169,8 @@ class HandlerTTS(HandlerBase, ABC):
             text = re.sub(r"<\|.*?\|>", "", text)
 
         text_end = inputs.data.get_meta("avatar_text_end", False)
+
+        """ 处理返回存在{...}的内容忽略 """
         if not text_end:
             first_ignore_text = False
             left_idx = text.find("{")
@@ -180,6 +199,7 @@ class HandlerTTS(HandlerBase, ABC):
                     callback = CosyvoiceCallBack(
                         context=context,
                         output_definition=output_definition,
+                        event_definition=event_definition,
                         speech_id=speech_id,
                         audio_save_path=os.path.join(DirectoryInfo.get_cache_dir(), "output_audio",
                                                      speech_id + str(context.synthesizer_idx) + ".mp3")
@@ -189,7 +209,7 @@ class HandlerTTS(HandlerBase, ABC):
                         voice=context.config.voice,
                         format=AudioFormat.PCM_24000HZ_MONO_16BIT,
                         volume=context.config.volume,
-                        speech_rate= context.config.speech_rate,
+                        speech_rate=context.config.speech_rate,
                         pitch_rate=context.config.pitch_rate,
                         callback=callback)
                 logger.info(f'bailian cosyvoice streaming_call {text}')

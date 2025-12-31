@@ -246,16 +246,24 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                     continue
                 logger.info(f"Got chat data {str(chat_data)}")
                 current_type = 'chat'
+                message = chat_data.data.get_main_data()
                 if chat_data.type == ChatDataType.AVATAR_TEXT:
                     current_role = 'avatar'
                 elif chat_data.type == ChatDataType.KEYWORD_TEXT:
                     current_role = 'human'
                     current_type = 'keyword'
+                elif chat_data.type == ChatDataType.HUMAN_EVENT:
+                    current_role = 'human'
+                    current_type = 'event'
+                    try:
+                        message = json.loads(chat_data.data.get_main_data())
+                    except json.JSONDecodeError:
+                        pass
                 else:
                     current_role = 'human'
                 chat_id = uuid.uuid4().hex if current_role != role else chat_id
                 role = current_role
-                self.chat_channel.send(json.dumps({'type': current_type, 'message': chat_data.data.get_main_data(),
+                self.chat_channel.send(json.dumps({'type': current_type, 'message': message,
                                                    'id': chat_id, 'role': current_role}))
 
         asyncio.create_task(process_chat_history())

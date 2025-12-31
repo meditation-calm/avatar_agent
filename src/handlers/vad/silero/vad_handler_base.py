@@ -69,6 +69,8 @@ class VADContext(HandlerContext):
 
         self.speech_id: int = 0
 
+        self.is_started = False
+
     def reset(self):
         """ 重置上下文状态，清空音频历史和相关计数器，为下一次语音检测做准备。 """
         self.audio_history.clear()

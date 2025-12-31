@@ -23,6 +23,7 @@ class VADHandler(HandlerBase, ABC):
     用于处理音频语音活动检测（VAD）。
     加载 Silero VAD 模型，处理音频数据，检测语音活动，并生成相应的输出数据。
     """
+
     def __init__(self):
         super().__init__()
         self.model = None
@@ -84,14 +85,21 @@ class VADHandler(HandlerBase, ABC):
         definition.add_entry(DataBundleEntry.create_audio_entry(
             "human_audio", 1, 16000
         ))
+        event_definition = DataBundleDefinition()
+        event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
         inputs = {
             ChatDataType.MIC_AUDIO: HandlerDataInfo(
                 type=ChatDataType.MIC_AUDIO
             )
         }
-        outputs = {ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
+        outputs = {
+            ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
                 type=ChatDataType.HUMAN_AUDIO,
                 definition=definition
+            ),
+            ChatDataType.HUMAN_EVENT: HandlerDataInfo(
+                type=ChatDataType.HUMAN_EVENT,
+                definition=event_definition
             )
         }
         return HandlerDetail(
@@ -127,6 +135,7 @@ class VADHandler(HandlerBase, ABC):
         """ 处理输入音频数据，执行语音活动检测并生成输出 """
         context = cast(VADContext, context)
         output_definition = output_definitions.get(ChatDataType.HUMAN_AUDIO).definition
+        event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
         """ 检查是否启用 VAD，未启用则直接返回 """
         if not context.shared_states.enable_vad:
             return
@@ -137,6 +146,12 @@ class VADHandler(HandlerBase, ABC):
         audio = inputs.data.get_main_data()
         if audio is None:
             return
+        if context.is_started is False:
+            context.is_started = True
+            event = DataBundle(event_definition)
+            event.set_main_data({"handler": "vad", "event": "start"})
+            context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
+
         audio_entry = inputs.data.get_main_definition_entry()
         sample_rate = audio_entry.sample_rate
         audio = audio.squeeze()
@@ -168,7 +183,11 @@ class VADHandler(HandlerBase, ABC):
             """
             if human_speech_end:
                 context.shared_states.enable_vad = False
+                context.is_started = False
                 context.reset()
+                event = DataBundle(event_definition)
+                event.set_main_data({"handler": "vad", "event": "end"})
+                context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
             if audio_clip is not None:
                 output = DataBundle(output_definition)
                 output.set_main_data(np.expand_dims(audio_clip, axis=0))
@@ -181,7 +200,7 @@ class VADHandler(HandlerBase, ABC):
                 )
                 if timestamp >= 0:
                     output_chat_data.timestamp = timestamp, sample_rate
-                yield output_chat_data
+                context.submit_data(output_chat_data)
 
     def destroy_context(self, context: HandlerContext):
         pass

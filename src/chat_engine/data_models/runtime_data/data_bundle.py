@@ -1,4 +1,5 @@
 import copy
+import json
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Sequence, Any, Union
 
@@ -346,6 +347,12 @@ class DataBundle:
         data_store = self.get_data_store(name, read_only=False)
         return data_store.set_data(data, DataStoreType.LOCAL_MEMORY)
 
+    def set_dict_data(self, name: str, _entry: DataBundleEntry, data: Dict[str, Any]):
+        """设置字典数据"""
+        json_str = json.dumps(data)
+        data_store = self.get_data_store(name, read_only=False)
+        return data_store.set_data(json_str, DataStoreType.LOCAL_MEMORY)
+
     def set_data(self, name: str, data: Union[np.ndarray, str]):
         """设置通用数据"""
         entry = self._definition.entries.get(name, None)
@@ -355,11 +362,13 @@ class DataBundle:
             return self.set_array_data(name, entry, data)
         elif isinstance(data, str):
             return self.set_text_data(name, entry, data)
+        elif isinstance(data, dict):
+            return self.set_dict_data(name, entry, data)
         else:
             msg = f"Input data type {type(data)} is not supported."
             raise RuntimeError(msg)
 
-    def set_main_data(self, data: Union[np.ndarray, str]):
+    def set_main_data(self, data: Union[np.ndarray, str, Dict[str, Any]]):
         """设置主数据"""
         main_data_name = self._definition.main_entry_name
         if main_data_name is None:

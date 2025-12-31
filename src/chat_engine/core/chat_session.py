@@ -87,6 +87,7 @@ class ChatDataSubmitter:
         sinks：数据接收器字典
         outputs：输出配置
     """
+
     def __init__(self, handler_name: str, output_info, session_context, sinks, outputs):
         self.handler_name = handler_name
         self.output_info = output_info
@@ -162,7 +163,7 @@ class ChatSession:
                 self.outputs[output_key] = DataSink(
                     owner="",
                     sink_queue=output_queue,
-                    consume_info = HandlerDataInfo(type=output_info.type),
+                    consume_info=HandlerDataInfo(type=output_info.type),
                 )
 
     @classmethod
@@ -178,7 +179,7 @@ class ChatSession:
 
     @classmethod
     def packet_video_data(cls, session_context: SessionContext, video_data: np.ndarray,
-                           _target_type: ChatDataType):
+                          _target_type: ChatDataType):
         """打包视频数据, 返回数据包"""
         frame_rate, image = video_data
         image = image.squeeze()
@@ -190,12 +191,12 @@ class ChatSession:
         input_image = image[np.newaxis, ...]
         data_bundle.set_main_data(input_image)
         return data_bundle
-    
+
     @classmethod
     def packet_text_data(cls, session_context: SessionContext, text_data: Tuple,
-                           _target_type: ChatDataType):
+                         _target_type: ChatDataType):
         """打包文本数据, 返回数据包"""
-        _, text = text_data 
+        _, text = text_data
         definition = session_context.get_input_text_definition()
         data_bundle = DataBundle(definition)
         data_bundle.set_main_data(text)
@@ -230,8 +231,8 @@ class ChatSession:
 
     @classmethod
     def inputs_pumper(cls, session_context: SessionContext, inputs: List[DataSource],
-                    sinks: Dict[ChatDataType, List[DataSink]],
-                    outputs: Dict[Tuple[str, ChatDataType], DataSink]):
+                      sinks: Dict[ChatDataType, List[DataSink]],
+                      outputs: Dict[Tuple[str, ChatDataType], DataSink]):
         """
         输入数据泵
             持续从输入队列中获取数据
@@ -316,7 +317,7 @@ class ChatSession:
 
     @classmethod
     def distribute_data(cls, data: ChatData, sinks: Dict[ChatDataType, List[DataSink]],
-                       outputs: Dict[Tuple[str, ChatDataType], DataSink]):
+                        outputs: Dict[Tuple[str, ChatDataType], DataSink]):
         """
         分发数据到接收器：
             根据数据源和类型找到对应的输出接收器
