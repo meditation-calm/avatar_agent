@@ -149,6 +149,7 @@ class HandlerTTS(HandlerBase, ABC):
             handler_config = TTSConfig()
         context = TTSContext(session_context.session_info.session_id)
         context.config = handler_config
+        context.shared_states = session_context.shared_states
         return context
 
     def start_context(self, session_context, context: HandlerContext):
@@ -222,11 +223,13 @@ class HandlerTTS(HandlerBase, ABC):
                 context.synthesizer_idx = context.synthesizer_idx + 1
                 context.input_text = ''
                 context.ignore_text = False
+                context.shared_states.enable_vad = True
         except Exception as e:
             logger.error(e)
             context.synthesizer.streaming_complete()
             context.synthesizer = None
             context.ignore_text = False
+            context.shared_states.enable_vad = True
 
     def destroy_context(self, context: HandlerContext):
         pass

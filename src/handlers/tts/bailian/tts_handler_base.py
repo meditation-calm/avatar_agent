@@ -23,6 +23,7 @@ class TTSContext(HandlerContext):
     def __init__(self, session_id: str):
         super().__init__(session_id)
         self.config: Optional[TTSConfig] = None
+        self.shared_states = None
         self.input_text = ''
         self.synthesizer = None
         self.synthesizer_idx = 0  # 合成索引
