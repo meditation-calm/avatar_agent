@@ -493,7 +493,7 @@ class WebRTCConnectionMixin:
             "type": pc.localDescription.type,
         }
 
-    def disconnect_webrtc(self, webrtc_id: str) -> bool:
+    async def disconnect_webrtc(self, webrtc_id: str) -> bool:
         """
         基于 webrtc_id 主动断开 RTC 连接
 
@@ -512,7 +512,7 @@ class WebRTCConnectionMixin:
             pc = self.pcs[webrtc_id]
 
             # 关闭连接
-            asyncio.create_task(pc.close())
+            await pc.close()
 
             # 执行清理操作
             self.clean_up(webrtc_id)

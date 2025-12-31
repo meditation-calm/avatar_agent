@@ -54,7 +54,7 @@ default:
       MuseTalk:
         module: avatar/musetalk/avatar_handler_musetalk
         fps: 25
-        batch_size: 20
+        batch_size: 10
         bbox_shift: -7
         gpu_id: 1
         avatar_video_path: "config/video/book.mp4"

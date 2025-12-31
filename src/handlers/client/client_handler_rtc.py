@@ -1,3 +1,5 @@
+import json
+import os.path
 from typing import Dict, Optional, cast
 
 import gradio
@@ -13,6 +15,7 @@ from src.chat_engine.data_models.chat_data.chat_data_model import ChatData
 from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import HandlerBaseConfigModel, ChatEngineConfigModel
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundleDefinition, DataBundleEntry, VariableSize
+from src.engine_utils.directory_info import DirectoryInfo
 from src.handlers.client.stream import Stream
 from src.service.rtc.rtc_provider import RTCProvider
 from src.service.rtc.rtc_stream import RtcStream
@@ -128,10 +131,30 @@ class ClientHandlerRtc(ClientHandlerBase):
                 "rtc_configuration": turn_entity.rtc_configuration if turn_entity is not None else None,
             }
 
+        @fastapi.get('/config/file/{file_path:path}')
+        async def read_config_file(file_path: str):
+            try:
+                # 获取配置目录的绝对路径
+                config_dir = DirectoryInfo.get_config_dir()
+                requested_path = os.path.join(config_dir, file_path)
+
+                if not os.path.exists(config_dir):
+                    return {"status": "error", "message": "File not found"}
+
+                with open(requested_path, 'r', encoding='utf-8') as f:
+                    content = json.load(f)
+                return content
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in file {file_path}: {e}")
+                return {"status": "error", "message": f"Invalid Config File: {str(e)}"}
+            except Exception as e:
+                logger.error(f"Error reading config file {file_path}: {e}")
+                return {"status": "error", "message": str(e)}
+
         @fastapi.post('/webrtc/disconnect/{webrtc_id}')
         async def disconnect_rtc(webrtc_id: str):
             self.rtc_streamer_factory.shutdown_session(webrtc_id)
-            success = webrtc.disconnect_webrtc(webrtc_id)
+            success = await webrtc.disconnect_webrtc(webrtc_id)
             if success:
                 return {"status": "success", "message": f"Disconnected {webrtc_id}"}
             else:

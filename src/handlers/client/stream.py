@@ -1148,7 +1148,7 @@ class Stream(WebRTCConnectionMixin):
             for tunnel in CURRENT_TUNNELS:
                 tunnel.kill()
 
-    def disconnect_webrtc(self, webrtc_id: str) -> bool:
+    async def disconnect_webrtc(self, webrtc_id: str) -> bool:
         """
         主动断开指定的 WebRTC 连接
 
@@ -1158,7 +1158,7 @@ class Stream(WebRTCConnectionMixin):
         Returns:
             bool: 操作是否成功
         """
-        return super().disconnect_webrtc(webrtc_id)
+        return await super().disconnect_webrtc(webrtc_id)
 
     def get_active_connections(self) -> list[str]:
         """
