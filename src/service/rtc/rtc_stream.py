@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 import uuid
 import weakref
 from typing import Optional, Dict
@@ -93,12 +94,10 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 session_id = uuid.uuid4().hex
 
             # 会话已存在，先清理旧的会话
-            if session_id in self.streams:
-                logger.warning(f"Stream {session_id} already exists, cleaning up old session")
-                self.shutdown_session(session_id)
-                # 给清理操作一些时间完成
-                import time
-                time.sleep(0.1)
+            # if session_id in self.streams:
+            #     logger.warning(f"Stream {session_id} already exists, cleaning up old session")
+            #     self.shutdown_session(session_id)
+            #     time.sleep(0.1)
 
             new_stream = RtcStream(
                 session_id,
