@@ -264,6 +264,12 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 current_id = human_id if current_role == 'human' else chat_id
                 self.chat_channel.send(json.dumps({'type': current_type, 'message': message,
                                                    'id': current_id, 'role': current_role}))
+                if current_type == 'event':
+                    handler = message['handler']
+                    event = message['event']
+                    if handler == 'tts' and event == 'end':
+                        chat_id = uuid.uuid4().hex
+                        human_id = uuid.uuid4().hex
 
         asyncio.create_task(process_chat_history())
 
