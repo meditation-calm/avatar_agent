@@ -1,6 +1,6 @@
-import asyncio
 import json
 import os.path
+import time
 from typing import Dict, Optional, cast
 
 import gradio
@@ -165,7 +165,7 @@ class ClientHandlerRtc(ClientHandlerBase):
                 success = await webrtc.disconnect_webrtc(webrtc_id)
                 if self.rtc_streamer_factory:
                     self.rtc_streamer_factory.shutdown_session(webrtc_id)
-                await asyncio.sleep(0.1)
+                time.sleep(0.1)
                 if success:
                     return {"status": "success", "message": f"Disconnected {webrtc_id}"}
                 else:
@@ -174,6 +174,7 @@ class ClientHandlerRtc(ClientHandlerBase):
                 logger.error(f"Error during disconnect {webrtc_id}: {e}")
                 if self.rtc_streamer_factory:
                     self.rtc_streamer_factory.shutdown_session(webrtc_id)
+                time.sleep(0.1)
                 return {"status": "error", "message": str(e)}
 
         @fastapi.get('/webrtc/active')
