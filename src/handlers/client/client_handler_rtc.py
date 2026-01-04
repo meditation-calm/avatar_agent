@@ -172,10 +172,13 @@ class ClientHandlerRtc(ClientHandlerBase):
                     return {"status": "failed", "message": f"Failed to disconnect {webrtc_id}"}
             except Exception as e:
                 logger.error(f"Error during disconnect {webrtc_id}: {e}")
-                if self.rtc_streamer_factory:
-                    self.rtc_streamer_factory.shutdown_session(webrtc_id)
-                time.sleep(0.1)
-                return {"status": "error", "message": str(e)}
+                try:
+                    if self.rtc_streamer_factory:
+                        self.rtc_streamer_factory.shutdown_session(webrtc_id)
+                    time.sleep(0.1)
+                    return {"status": "error", "message": str(e)}
+                except Exception as e:
+                    logger.error(f"Error during disconnect {webrtc_id}: {e}")
 
         @fastapi.get('/webrtc/active')
         async def rtc_active():
