@@ -349,6 +349,9 @@ class RtcStream(AsyncAudioVideoStreamHandler):
         """ 通过 session_id 清理特定会话 """
         if session_id in self.streams:
             stream = self.streams[session_id]
-            stream.shutdown()
+            try:
+                stream.shutdown()
+            except Exception as e:
+                logger.error(f"Error shutdown session {session_id}", e)
             del self.streams[session_id]
             logger.info(f"Shutdown session {session_id}")
