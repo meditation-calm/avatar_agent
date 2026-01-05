@@ -1,5 +1,5 @@
-x ià y è @下一页
-sh àng y è @上一页
+x ià y ī y è @下一页
+sh àng y ī y è @上一页
 f ǎn h uí @返回
 h uí d ào sh ǒu y è @回到首页
 z ài j iàn @再见
