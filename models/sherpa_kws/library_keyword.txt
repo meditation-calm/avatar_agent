@@ -13,3 +13,12 @@ j īn r ì t uī j iàn @今日推荐
 g uān b ì @关闭
 y uè d ú @阅读
 b ō f àng @播放
+d ǎ k āi d ì y ī b ěn @打开第一本
+d ǎ k āi d ì èr b ěn @打开第二本
+d ǎ k āi d ì s ān b ěn @打开第三本
+d ǎ k āi d ì s ì b ěn @打开第四本
+d ǎ k āi d ì w ǔ b ěn @打开第五本
+d ǎ k āi d ì l iù b ěn @打开第六本
+d ǎ k āi d ì q ī b ěn @打开第七本
+d ǎ k āi d ì b ā b ěn @打开第八本
+d ǎ k āi d ì j i ǔ b ěn @打开第九本
