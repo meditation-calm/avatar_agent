@@ -10,5 +10,17 @@
     "secret": "ylz123456",
     "organization": "厦门市集美区杏东小学",
     "expireTime": "2027-01-01 00:00:00"
+  },
+  {
+    "account": "test3",
+    "secret": "ylz123456",
+    "organization": "厦门市滨水学校",
+    "expireTime": "2027-01-01 00:00:00"
+  },
+  {
+    "account": "test4",
+    "secret": "ylz123456",
+    "organization": "厦门市集美区杏东小学",
+    "expireTime": "2027-01-01 00:00:00"
   }
 ]
