@@ -1,5 +1,6 @@
 import json
 import os.path
+import uuid
 
 import jwt
 from datetime import datetime, timedelta
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from src.engine_utils.directory_info import DirectoryInfo
+from src.routes.token_manager import TokenManager
 
 router = APIRouter()
 security = HTTPBearer()
@@ -16,6 +18,9 @@ security = HTTPBearer()
 # JWT配置
 JWT_SECRET = "human@123"
 JWT_ALGORITHM = "HS256"
+
+# 初始化Token管理器
+token_manager = TokenManager()
 
 
 class LoginRequest(BaseModel):
@@ -62,6 +67,8 @@ def create_access_token(data: dict, expires_at: Optional[datetime] = None):
 def verify_token(token: str):
     """验证JWT令牌"""
     try:
+        if not token_manager.is_token_valid(token):
+            raise HTTPException(status_code=401, detail="Token无效")
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         account: str = payload.get("sub")
         if account is None:
@@ -86,16 +93,17 @@ async def login(request: LoginRequest):
     if not user or not verify_password(request.secret, user["secret"]):
         raise HTTPException(status_code=401, detail="用户名或密码错误")
 
-    # 检查是否过期
-    expire_time = datetime.strptime(user["expireTime"], "%Y-%m-%d %H:%M:%S")
-    if datetime.now() > expire_time:
-        raise HTTPException(status_code=401, detail="账户已过期")
-
     # 创建访问令牌
+    expire_time = datetime.strptime(user["expireTime"], "%Y-%m-%d %H:%M:%S")
     access_token = create_access_token(
-        data={"sub": user["account"], "organization": user["organization"]},
+        data={
+            "id": uuid.uuid4().hex,
+            "sub": user["account"],
+            "organization": user["organization"]
+        },
         expires_at=expire_time
     )
+    token_manager.store_user_token(user["account"], access_token, expire_time)
 
     return {
         "access_token": access_token,
