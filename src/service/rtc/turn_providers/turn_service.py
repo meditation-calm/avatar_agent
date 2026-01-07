@@ -24,10 +24,14 @@ class TurnServerProvider(BaseRtcTurnProvider):
         result.rtc_configuration = {
             "iceServers": [
                 {
+                    "urls": ["stun:stun.l.google.com:19302"]
+                },
+                {
                     "urls": config.urls,
                     "username": config.username,
                     "credential": config.credential,
                 }
-            ]
+            ],
+            "iceTransportPolicy": "relay",
         }
         return result
