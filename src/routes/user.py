@@ -116,7 +116,10 @@ async def login(request: LoginRequest):
 @router.get("/verify_token")
 async def verify_token_endpoint(current_user: dict = Depends(get_current_user)):
     """验证token接口"""
-    return {
-        "account": current_user.get("sub"),
-        "organization": current_user.get("organization")
-    }
+    user = get_user(current_user.get("sub"))
+    if not user:
+        raise HTTPException(status_code=401, detail="用户不存在")
+    user_copy = user.copy()
+    del user_copy["secret"]
+    del user_copy["expireTime"]
+    return user_copy
