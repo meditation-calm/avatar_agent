@@ -9,10 +9,14 @@ d ǎ k āi d iàn z ǐ t ú sh ū @打开电子图书
 d ǎ k āi y ǒu sh ēng d ú w ù @打开有声读物
 d ǎ k āi y ǒu sh ēng sh ū @打开有声书
 m ěi r ì t uī j iàn @每日推荐
+d ǎ k āi m ěi r ì t uī j iàn @打开每日推荐
 j īn r ì t uī j iàn @今日推荐
+d ǎ k āi j īn r ì t uī j iàn @打开今日推荐
 g uān b ì @关闭
 y uè d ú @阅读
+k āi sh ǐ y uè d ú @开始阅读
 b ō f àng @播放
+k āi sh ǐ b ō f àng @开始播放
 d ǎ k āi d ì y ī b ěn @打开第一本
 d ǎ k āi d ì èr b ěn @打开第二本
 d ǎ k āi d ì s ān b ěn @打开第三本
