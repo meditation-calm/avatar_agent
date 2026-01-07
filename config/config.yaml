@@ -16,7 +16,7 @@ default:
         concurrent_limit: 5
         turn_config:
           turn_provider: "turn_server"
-          urls: [ "stun:stun.l.google.com:19302", "turn:121.40.166.120:3478" ]
+          urls: [ "turn:121.40.166.120:3478" ]
           username: "szr"
           credential: "szr123"
       SileroVad:
