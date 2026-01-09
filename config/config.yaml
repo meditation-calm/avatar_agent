@@ -23,7 +23,7 @@ default:
         module: vad/silero/vad_handler_silero
         speaking_threshold: 0.5
         start_delay: 2048
-        end_delay: 5000
+        end_delay: 10000
         buffer_look_back: 5000
         speech_padding: 512
 #      XiaoYunKws:
@@ -38,7 +38,7 @@ default:
       SenseVoice:
         module: asr/sensevoice/asr_handler_sensevoice
         model_name: "iic/SenseVoiceSmall"
-        language: "auto"
+        language: "zh"
         use_itn: False
         batch_size_s: 10
 #      LLMOpenAI:

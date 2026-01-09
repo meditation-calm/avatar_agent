@@ -1,0 +1,5 @@
+{
+  "edition_name": "0.0.2",
+  "edition_wgt_url": "https://example.com/updates/app-0.0.2.wgt",
+  "edition_force": "0"
+}
