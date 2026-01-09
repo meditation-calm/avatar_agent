@@ -1,34 +1,38 @@
 [
   {
-    "account": "test",
+    "account": "xmbsxx1",
     "secret": "ylz123456",
     "organization": "厦门市滨水学校",
+    "logo": "/static/avatar/xmbsxx.png",
     "avatar": "/static/avatar/katong.mp4",
-    "avatar_speaking": "/static/avatar/katong_speaking.mp4",
+    "avatar_speaking": "/static/avatar/katong.mp4",
     "expireTime": "2027-01-01 00:00:00"
   },
   {
-    "account": "test2",
-    "secret": "ylz123456",
-    "organization": "厦门市集美区杏东小学",
-    "avatar": "/static/avatar/katong.mp4",
-    "avatar_speaking": "/static/avatar/katong_speaking.mp4",
-    "expireTime": "2027-01-01 00:00:00"
-  },
-  {
-    "account": "test3",
+    "account": "xmbsxx2",
     "secret": "ylz123456",
     "organization": "厦门市滨水学校",
+    "logo": "/static/avatar/xmbsxx.png",
     "avatar": "/static/avatar/katong.mp4",
-    "avatar_speaking": "/static/avatar/katong_speaking.mp4",
+    "avatar_speaking": "/static/avatar/katong.mp4",
     "expireTime": "2027-01-01 00:00:00"
   },
   {
-    "account": "test4",
+    "account": "xmgkz",
+    "secret": "ylz123456",
+    "organization": "厦门灌口镇",
+    "logo": "/static/avatar/xmgkz.png",
+    "avatar": "/static/avatar/book_silent.mp4",
+    "avatar_speaking": "/static/avatar/book_silent.mp4",
+    "expireTime": "2027-01-01 00:00:00"
+  },
+  {
+    "account": "xmxdxx",
     "secret": "ylz123456",
     "organization": "厦门市集美区杏东小学",
-    "avatar": "/static/avatar/katong.mp4",
-    "avatar_speaking": "/static/avatar/katong_speaking.mp4",
+    "logo": "/static/avatar/xmxdxx.png",
+    "avatar": "/static/avatar/student.mp4",
+    "avatar_speaking": "/static/avatar/student.mp4",
     "expireTime": "2027-01-01 00:00:00"
   }
 ]
