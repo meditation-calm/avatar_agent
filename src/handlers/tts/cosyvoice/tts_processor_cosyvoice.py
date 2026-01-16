@@ -49,19 +49,25 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
             from src.handlers.tts.cosyvoice.CosyVoice.cosyvoice.cli.cosyvoice import CosyVoice, CosyVoice2
             try:
                 self.model = CosyVoice(model_dir=self.model_name)
+                logger.info(f"Loaded CosyVoice model from {self.model_name}")
             except Exception:
                 try:
                     self.model = CosyVoice2(model_dir=self.model_name)
+                    logger.info(f"Loaded CosyVoice2 model from {self.model_name}")
                 except Exception:
                     raise TypeError('Cosyvoice no valid model_type!')
+            speakers = self.model.list_available_spks()
+            logger.info(f"Available speakers: {speakers}")
             self.model.sample_rate = self.sample_rate
             if self.ref_audio_path:
+                if not os.path.exists(self.ref_audio_path) and not os.path.isabs(self.ref_audio_path):
+                    self.ref_audio_path = os.path.join(DirectoryInfo.get_project_dir(), self.ref_audio_path)
                 self.ref_audio_buffer = load_wav(self.ref_audio_path, self.sample_rate)
                 self.ref_audio_text = self.ref_audio_text
             init_text = '欢迎来到中国2025'
             if self.ref_audio_buffer is not None:
                 response = self.model.inference_zero_shot(
-                    init_text, self.ref_audio_text, self.ref_audio_buffer, True, False, self.speed)
+                    init_text, self.ref_audio_text, self.ref_audio_buffer, '', False, self.speed)
             elif self.spk_id:
                 response = self.model.inference_sft(init_text, self.spk_id, False, self.speed)
             else:
@@ -96,7 +102,7 @@ class TTSCosyVoiceProcessor(spawn_context.Process):
             if self.model:
                 if self.ref_audio_buffer is not None:
                     response = self.model.inference_zero_shot(
-                        input_text, self.ref_audio_text, self.ref_audio_buffer, True, True, self.speed)
+                        input_text, self.ref_audio_text, self.ref_audio_buffer, '', True, self.speed)
                 elif self.spk_id:
                     response = self.model.inference_sft(input_text, self.spk_id, True, self.speed)
                 else:
