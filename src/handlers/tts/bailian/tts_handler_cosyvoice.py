@@ -96,7 +96,7 @@ class CosyvoiceCallBack(ResultCallback):
     def on_close(self) -> None:
         logger.info('bailian cosyvoice close')
         self.sendEventData({"handler": "tts", "event": "end"})
-        self.context.shared_states.enable_vad = True
+        # self.context.shared_states.enable_vad = True
 
 
 class HandlerTTS(HandlerBase, ABC):

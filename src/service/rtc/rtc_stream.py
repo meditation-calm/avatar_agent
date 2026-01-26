@@ -300,7 +300,10 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 return
             logger.info(f'on_chat_datachannel: {message}')
 
-            if message['type'] == 'stop_chat':
+            if message['type'] == 'vad':
+                enable = message.get('enable', True)
+                self.client_session_delegate.shared_states.enable_vad = enable
+            elif message['type'] == 'stop_chat':
                 self.client_session_delegate.emit_signal(
                     ChatSignal(
                         type=ChatSignalType.INTERRUPT,
