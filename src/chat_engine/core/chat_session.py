@@ -396,6 +396,7 @@ class ChatSession:
         handler_env = HandlerEnv(handler_info=handler_info, handler=handler, config=handler_config)
         handler_env.context = handler.create_context(self.session_context, handler_env.config)
         handler_env.context.owner = handler_info.name
+        handler_env.context.session_context = self.session_context  # 设置会话上下文引用
         handler_env.input_queue = queue.Queue()
         io_detail = handler.get_handler_detail(self.session_context, handler_env.context)
         inputs = io_detail.inputs
@@ -482,3 +483,12 @@ class ChatSession:
         # TODO this is temp implementation a full signal infrastructure is needed.
         if signal.source_type == ChatSignalSourceType.CLIENT and signal.type == ChatSignalType.END:
             self.session_context.shared_states.enable_vad = True
+        elif signal.source_type == ChatSignalSourceType.HANDLER and signal.type == ChatSignalType.INTERRUPT:
+            # 处理来自 handler 的打断信号
+            logger.info(f"Received interrupt signal from {signal.source_name}")
+            # 触发所有相关处理器的打断处理
+            for handler_name, handler_record in self.handlers.items():
+                try:
+                    handler_record.env.handler.interrupt(handler_record.env.context)
+                except Exception as e:
+                    logger.error(f"Error interrupting handler {handler_name}: {e}")

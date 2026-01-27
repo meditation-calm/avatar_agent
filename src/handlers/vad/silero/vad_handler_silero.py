@@ -80,10 +80,14 @@ class VADHandler(HandlerBase, ABC):
 
     def get_handler_detail(self, session_context: SessionContext,
                            context: HandlerContext) -> HandlerDetail:
-        """ 返回处理器的输入输出定义，指定输入为麦克风音频，输出为人类语音。 """
+        """ 返回处理器的输入输出定义，指定输入为麦克风音频，输出为人类语音和打断音频。 """
         definition = DataBundleDefinition()
         definition.add_entry(DataBundleEntry.create_audio_entry(
             "human_audio", 1, 16000
+        ))
+        interrupt_definition = DataBundleDefinition()
+        interrupt_definition.add_entry(DataBundleEntry.create_audio_entry(
+            "interrupt_audio", 1, 16000
         ))
         event_definition = DataBundleDefinition()
         event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
@@ -96,6 +100,10 @@ class VADHandler(HandlerBase, ABC):
             ChatDataType.HUMAN_AUDIO: HandlerDataInfo(
                 type=ChatDataType.HUMAN_AUDIO,
                 definition=definition
+            ),
+            ChatDataType.INTERRUPT_AUDIO: HandlerDataInfo(
+                type=ChatDataType.INTERRUPT_AUDIO,
+                definition=interrupt_definition
             ),
             ChatDataType.HUMAN_EVENT: HandlerDataInfo(
                 type=ChatDataType.HUMAN_EVENT,
@@ -135,11 +143,41 @@ class VADHandler(HandlerBase, ABC):
         """ 处理输入音频数据，执行语音活动检测并生成输出 """
         context = cast(VADContext, context)
         output_definition = output_definitions.get(ChatDataType.HUMAN_AUDIO).definition
+        interrupt_output_definition = output_definitions.get(ChatDataType.INTERRUPT_AUDIO).definition
         event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
-        """ 检查是否启用 VAD，未启用则直接返回 """
-        if not context.shared_states.enable_vad:
-            return
+        
         if inputs.type != ChatDataType.MIC_AUDIO:
+            return
+        
+        """ 检查是否启用 VAD，未启用时输出 INTERRUPT_AUDIO 给 KIS """
+        if not context.shared_states.enable_vad:
+            """ 在数字人回复期间，将音频数据传递给 KIS 进行打断检测 """
+            audio = inputs.data.get_main_data()
+            if audio is None:
+                return
+            
+            audio_entry = inputs.data.get_main_definition_entry()
+            sample_rate = audio_entry.sample_rate
+            audio = audio.squeeze()
+            
+            timestamp = None
+            if inputs.is_timestamp_valid():
+                timestamp = inputs.timestamp
+            
+            if audio.dtype != np.float32:
+                audio = audio.astype(np.float32) / 32767
+            
+            """ 输出 INTERRUPT_AUDIO 给 KIS handler """
+            if interrupt_output_definition is not None:
+                interrupt_output = DataBundle(interrupt_output_definition)
+                interrupt_output.set_main_data(np.expand_dims(audio, axis=0))
+                interrupt_chat_data = ChatData(
+                    type=ChatDataType.INTERRUPT_AUDIO,
+                    data=interrupt_output
+                )
+                if timestamp is not None and timestamp[0] >= 0:
+                    interrupt_chat_data.timestamp = timestamp
+                context.submit_data(interrupt_chat_data)
             return
 
         """ 提取音频数据并进行预处理 """

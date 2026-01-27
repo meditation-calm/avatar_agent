@@ -124,5 +124,12 @@ class LLMHandler(HandlerBase, ABC):
         event.set_main_data({"handler": "llm", "event": "end"})
         context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
 
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号：清空输入文本缓存"""
+        context = cast(DifyContext, context)
+        logger.info("LLM: Interrupt received, clearing input text")
+        context.input_texts = ''
+        context.current_image = None
+
     def destroy_context(self, context: HandlerContext):
         pass

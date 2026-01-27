@@ -231,5 +231,21 @@ class HandlerTTS(HandlerBase, ABC):
             context.ignore_text = False
             context.shared_states.enable_vad = True
 
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号：停止 TTS 合成，清空输入文本"""
+        context = cast(TTSContext, context)
+        logger.info("TTS: Interrupt received, stopping synthesis")
+        if context.synthesizer is not None:
+            try:
+                context.synthesizer.streaming_complete()
+            except Exception as e:
+                logger.error(f"Error stopping synthesizer: {e}")
+            context.synthesizer = None
+        context.input_text = ''
+        context.ignore_text = False
+        # 重新启用 VAD
+        if context.shared_states:
+            context.shared_states.enable_vad = True
+
     def destroy_context(self, context: HandlerContext):
         pass

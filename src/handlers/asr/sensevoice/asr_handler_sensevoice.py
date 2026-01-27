@@ -171,5 +171,13 @@ class ASRHandler(HandlerBase, ABC):
         event.set_main_data({"handler": "asr", "event": "end"})
         context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
 
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号：清空音频缓存，重置切片上下文"""
+        context = cast(ASRContext, context)
+        logger.info("ASR: Interrupt received, clearing audio buffer")
+        context.output_audios.clear()
+        if context.audio_slice_context is not None:
+            context.audio_slice_context.flush()
+
     def destroy_context(self, context: HandlerContext):
         pass

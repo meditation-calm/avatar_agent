@@ -21,6 +21,8 @@ class ChatDataType(Enum):
     MIC_AUDIO = ("mic_audio", EngineChannelType.AUDIO)
     """ 处理后的人类用户音频数据 """
     HUMAN_AUDIO = ("human_audio", EngineChannelType.AUDIO)
+    """ 用于打断检测的音频数据（在数字人回复期间） """
+    INTERRUPT_AUDIO = ("interrupt_audio", EngineChannelType.AUDIO)
     """ 摄像头的视频数据 """
     CAMERA_VIDEO = ("camera_video", EngineChannelType.VIDEO)
     """ 虚拟数字人生成的文本数据 """

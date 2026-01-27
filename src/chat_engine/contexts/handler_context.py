@@ -18,6 +18,7 @@ class HandlerContext(object):
         self.session_id = session_id
         self.owner = None
         self.data_submitter = None
+        self.session_context = None  # 会话上下文引用，用于发送信号等操作
 
     def submit_data(self, data: HandlerResultType):
         if self.data_submitter is None:

@@ -122,6 +122,16 @@ class HandlerBase(ABC):
         # 销毁处理器上下文
         pass
 
+    def interrupt(self, context: HandlerContext):
+        """
+        处理打断信号：
+            当收到打断信号时，处理器应该停止当前处理任务
+            清理相关资源，准备接收新的输入
+            这是一个可选实现的方法，默认不做任何操作
+        """
+        # 默认实现为空，子类可以重写此方法来实现打断逻辑
+        pass
+
     def destroy(self):
         # 处理器销毁时调用的方法
         pass

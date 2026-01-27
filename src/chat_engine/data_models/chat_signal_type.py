@@ -22,8 +22,9 @@ class ChatSignalSourceType(str, Enum):
     """
     信号的来源类型：
         CLIENT = "client"：来自客户端的信号
+        HANDLER = "handler"：来自处理器的信号
     """
     CLIENT = "client"
     # LOGIC = "logic"
-    # HANDLER = "handler"
+    HANDLER = "handler"
     # ENGINE = "engine"

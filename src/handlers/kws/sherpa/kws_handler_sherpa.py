@@ -162,5 +162,13 @@ class KWSHandler(HandlerBase, ABC):
             chat_data = ChatData(type=ChatDataType.HUMAN_AUDIO, data=data_bundle)
             context.submit_data(chat_data)
 
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号：清空音频缓存，重置流状态"""
+        context = cast(KwsContext, context)
+        logger.info("KWS: Interrupt received, clearing audio buffer")
+        context.output_audios.clear()
+        if self.kws_stream is not None:
+            self.model.reset_stream(self.kws_stream)
+
     def destroy_context(self, context: HandlerContext):
         pass
