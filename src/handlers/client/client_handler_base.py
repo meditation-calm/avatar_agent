@@ -30,6 +30,9 @@ class RtcClientSessionDelegate(ClientSessionDelegate):
         self.timestamp_generator = None
         self.data_submitter = None
         self.shared_states = None
+        # 由 ClientHandlerDelegate.start_session 注入，指向当前会话的 ChatSession
+        # 这里不做强类型依赖，避免循环 import
+        self.chat_session = None
         self.output_queues = {
             EngineChannelType.AUDIO: asyncio.Queue(),
             EngineChannelType.VIDEO: asyncio.Queue(),
@@ -90,7 +93,14 @@ class RtcClientSessionDelegate(ClientSessionDelegate):
         return self.timestamp_generator()
 
     def emit_signal(self, signal: ChatSignal):
-        pass
+        # 将信号转发给当前会话（如果存在）
+        if self.chat_session is None:
+            return
+        try:
+            self.chat_session.emit_signal(signal)
+        except Exception:
+            # 避免信号处理影响主流程
+            return
 
     def clear_data(self):
         for data_queue in self.output_queues.values():

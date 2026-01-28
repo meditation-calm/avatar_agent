@@ -311,6 +311,31 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                         source_name="rtc",
                     )
                 )
+            elif message['type'] == 'interrupt_confirm':
+                # 前端确认已停止播放/动画后，回传确认，后端据此调用当前会话的 KIS.interrupt()
+                request_id = message.get('request_id', None)
+                session = getattr(self.client_session_delegate, "chat_session", None)
+                if session is None:
+                    logger.warning("interrupt_confirm received but chat_session is not available")
+                    return
+                kis_env = None
+                for _name, record in session.handlers.items():
+                    try:
+                        handler_mod = type(record.env.handler).__module__
+                    except Exception:
+                        handler_mod = ""
+                    if handler_mod.startswith("kis."):
+                        kis_env = record.env
+                        break
+                if kis_env is None:
+                    logger.warning("interrupt_confirm received but no KIS handler found in session")
+                    return
+                kis_ctx = kis_env.context
+                pending_id = getattr(kis_ctx, "pending_request_id", None)
+                if request_id is not None and pending_id is not None and request_id != pending_id:
+                    logger.warning(f"interrupt_confirm request_id mismatch: got={request_id} expected={pending_id}")
+                    return
+                kis_env.handler.interrupt(kis_ctx)
             elif message['type'] == 'chat':
                 channel.send(json.dumps({'type': 'avatar_end'}))
                 if self.client_session_delegate.shared_states.enable_vad is False:

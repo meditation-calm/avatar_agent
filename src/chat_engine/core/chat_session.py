@@ -483,6 +483,13 @@ class ChatSession:
         # TODO this is temp implementation a full signal infrastructure is needed.
         if signal.source_type == ChatSignalSourceType.CLIENT and signal.type == ChatSignalType.END:
             self.session_context.shared_states.enable_vad = True
+        elif signal.source_type == ChatSignalSourceType.CLIENT and signal.type == ChatSignalType.INTERRUPT:
+            logger.info(f"Received interrupt signal from client {signal.source_name}")
+            for handler_name, handler_record in self.handlers.items():
+                try:
+                    handler_record.env.handler.interrupt(handler_record.env.context)
+                except Exception as e:
+                    logger.error(f"Error interrupting handler {handler_name}: {e}")
         elif signal.source_type == ChatSignalSourceType.HANDLER and signal.type == ChatSignalType.INTERRUPT:
             # 处理来自 handler 的打断信号
             logger.info(f"Received interrupt signal from {signal.source_name}")

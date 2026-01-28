@@ -5,6 +5,7 @@ from typing import cast, Dict, Optional
 import numpy as np
 import sherpa_onnx
 from loguru import logger
+from uuid import uuid4
 
 from src.chat_engine.common.handler_base import HandlerBase, HandlerBaseInfo, HandlerDetail, HandlerDataInfo
 from src.chat_engine.contexts.handler_context import HandlerContext
@@ -142,13 +143,16 @@ class KISHandler(HandlerBase, ABC):
             logger.info(f"Interrupt keyword detected: {keyword}")
             context.interrupt_keyword_detected = True
             context.interrupt_pending = True
+            request_id = uuid4().hex
+            context.pending_request_id = request_id
             
             # 发送打断信号给前端
             event = DataBundle(event_definition)
             event.set_main_data({
                 "handler": "kis",
                 "event": "interrupt_request",
-                "keyword": keyword
+                "keyword": keyword,
+                "request_id": request_id,
             })
             context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
             
@@ -171,6 +175,7 @@ class KISHandler(HandlerBase, ABC):
         # 重置状态
         context.interrupt_pending = False
         context.interrupt_keyword_detected = False
+        context.pending_request_id = None
         context.output_audios.clear()
         
         # 重新启用 VAD
