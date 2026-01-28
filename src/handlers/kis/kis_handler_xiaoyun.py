@@ -22,7 +22,7 @@ from src.handlers.kis.kis_handler_base import KISContext
 class KISXiaoyunConfig:
     """Xiaoyun KIS 配置（简化版，因为 Xiaoyun 只支持单个关键词）"""
     def __init__(self, model_name="iic/speech_charctc_kws_phone-xiaoyun", 
-                 interrupt_keyword="小云小云", speaking_threshold=0.5):
+                 interrupt_keyword="小云小云", speaking_threshold=0.1):
         self.model_name = model_name
         self.interrupt_keyword = interrupt_keyword  # 单个关键词
         self.speaking_threshold = speaking_threshold
@@ -180,13 +180,15 @@ class KISHandler(HandlerBase, ABC):
                             context.pending_request_id = request_id
                             
                             # 发送打断信号给前端
-                            event = DataBundle(event_definition)
-                            event.set_main_data({
+                            payload = {
                                 "handler": "kis",
                                 "event": "interrupt_request",
                                 "keyword": interrupt_keyword,  # 使用配置的第一个关键词
                                 "request_id": request_id,
-                            })
+                            }
+                            logger.info(f"KIS Xiaoyun sending interrupt request: {payload}")
+                            event = DataBundle(event_definition)
+                            event.set_main_data(payload)
                             context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
                             
                             logger.info("KIS Xiaoyun: Interrupt keyword detected, waiting for frontend confirmation")

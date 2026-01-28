@@ -255,7 +255,14 @@ class RtcStream(AsyncAudioVideoStreamHandler):
                 chat_data = await self.client_session_delegate.get_data(EngineChannelType.TEXT)
                 if chat_data is None or chat_data.data is None:
                     continue
-                logger.info(f"Got chat data {str(chat_data)}")
+                if chat_data.type == ChatDataType.HUMAN_EVENT:
+                    try:
+                        event_data = chat_data.data.get_main_data()
+                        logger.info(f"Got chat data HUMAN_EVENT: {event_data}")
+                    except Exception:
+                        logger.info(f"Got chat data {str(chat_data)}")
+                else:
+                    logger.info(f"Got chat data {str(chat_data)}")
                 current_type = 'chat'
                 message = chat_data.data.get_main_data()
                 if chat_data.type == ChatDataType.AVATAR_TEXT:
