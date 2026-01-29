@@ -19,6 +19,7 @@ class HandlerContext(object):
         self.owner = None
         self.data_submitter = None
         self.session_context = None  # 会话上下文引用，用于发送信号等操作
+        self.chat_session_ref = None  # ChatSession 的弱引用
 
     def submit_data(self, data: HandlerResultType):
         if self.data_submitter is None:

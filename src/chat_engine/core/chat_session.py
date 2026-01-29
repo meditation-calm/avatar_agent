@@ -2,6 +2,7 @@ import asyncio
 import queue
 import threading
 import time
+import weakref
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Tuple, Iterable
 from uuid import uuid4
