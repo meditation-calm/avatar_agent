@@ -237,21 +237,27 @@ class KISHandler(HandlerBase, ABC):
 
     def _send_interrupt_signal(self, context: KISContext):
         """发送系统级打断信号"""
-        if self.engine:
+        session = None
+        # Try to get session from context reference first (more reliable)
+        if hasattr(context, 'chat_session_ref') and context.chat_session_ref:
+            session = context.chat_session_ref()
+        
+        # Fallback to engine lookup if reference missing or dead
+        if session is None and self.engine:
             engine = self.engine()
             if engine and context.session_id in engine.sessions:
                 session = engine.sessions[context.session_id]
-                signal = ChatSignal(
-                    type=ChatSignalType.INTERRUPT,
-                    source_type=ChatSignalSourceType.HANDLER,
-                    source_name="kis"
-                )
-                session.emit_signal(signal)
-                logger.info(f"KIS Xiaoyun: Interrupt signal emitted for session {context.session_id}")
-            else:
-                logger.warning(f"Could not find session {context.session_id} to emit interrupt signal")
+        
+        if session:
+            signal = ChatSignal(
+                type=ChatSignalType.INTERRUPT,
+                source_type=ChatSignalSourceType.HANDLER,
+                source_name="kis"
+            )
+            session.emit_signal(signal)
+            logger.info(f"KIS Xiaoyun: Interrupt signal emitted for session {context.session_id}")
         else:
-            logger.warning("Engine reference is missing in KISHandler")
+            logger.warning(f"Could not find session {context.session_id} to emit interrupt signal")
 
     def destroy_context(self, context: HandlerContext):
         pass

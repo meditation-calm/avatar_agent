@@ -397,6 +397,7 @@ class ChatSession:
         handler_env.context = handler.create_context(self.session_context, handler_env.config)
         handler_env.context.owner = handler_info.name
         handler_env.context.session_context = self.session_context  # 设置会话上下文引用
+        handler_env.context.chat_session_ref = weakref.ref(self)
         handler_env.input_queue = queue.Queue()
         io_detail = handler.get_handler_detail(self.session_context, handler_env.context)
         inputs = io_detail.inputs
