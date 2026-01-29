@@ -241,11 +241,21 @@ class TTSHandler(HandlerBase, ABC):
         context.interrupted = True
         context.input_text = ''
         context.task_queue.clear()
-        # 注意：这里我们无法撤回已经发送给子进程的任务，
-        # 但我们清空了 task_queue，所以 consumer 即使收到子进程的结果也会因为找不到对应的 task 而丢弃吗？
-        # 看 consumer 的实现：taskDeque = task_queue_map.get(session_id); for task in taskDeque: if task.id == key...
-        # 如果 task_queue 被清空了，consumer 就找不到对应的 task，自然就不会 put 到 result_queue。
-        # 这样是安全的。
+        
+        # FIX: 清空进程间通信的 input_queue，防止子进程继续从队列中获取旧任务
+        # 注意：multiprocessing.Queue 没有 clear() 方法，只能循环 get() 直到空
+        try:
+            while not self.tts_input_queue.empty():
+                self.tts_input_queue.get_nowait()
+        except Exception:
+            pass # 队列已空或出错，忽略
+
+        # 注意：output_queue 也可以考虑清空，但 consumer 线程有 interrupted 标志检查，应该能过滤掉旧数据
+        # 但为了保险起见，也可以尝试清空 output_queue 中属于当前 session 的数据
+        # 然而 output_queue 是多进程共享的，直接清空可能会影响其他 session（虽然目前只能单 session）
+        # 且 output_queue 里的数据没有 session_id 标签在外面，需要 get 出来看，比较麻烦。
+        # 依赖 consumer 线程的 session_id 校验和 task 匹配机制应该足够。
+        # 关键是不要让子进程继续处理积压在 input_queue 里的文本。
         
         # 重新启用 VAD (参考 Bailian TTS 的实现，也许需要？)
         # if context.shared_states:
