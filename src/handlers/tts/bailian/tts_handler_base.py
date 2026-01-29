@@ -26,3 +26,4 @@ class TTSContext(HandlerContext):
         self.synthesizer = None
         self.synthesizer_idx = 0  # 合成索引
         self.ignore_text = False
+        self.interrupted = False

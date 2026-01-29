@@ -71,6 +71,11 @@ class LLMHandler(HandlerBase, ABC):
         output_definition = output_definitions.get(ChatDataType.AVATAR_TEXT).definition
         event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
         context = cast(DifyContext, context)
+        
+        # 重置打断标志
+        if context.interrupted:
+            context.interrupted = False
+            
         if inputs.type != ChatDataType.HUMAN_TEXT:
             return
         speech_id = inputs.data.get_meta("speech_id", context.session_id)
@@ -94,6 +99,12 @@ class LLMHandler(HandlerBase, ABC):
         try:
             for output_text in DifyRequest.chat_messages(context, chat_text,
                         [context.current_image] if context.current_image is not None else []):
+                
+                # 检查是否被打断
+                if context.interrupted:
+                    logger.info(f"LLM Dify interrupted during generation for speech_id: {speech_id}")
+                    break
+
                 if output_text:
                     context.output_texts += output_text
                     logger.info(output_text)
@@ -102,6 +113,15 @@ class LLMHandler(HandlerBase, ABC):
                     output.add_meta("avatar_text_end", False)
                     output.add_meta("speech_id", speech_id)
                     context.submit_data(ChatData(type=ChatDataType.AVATAR_TEXT, data=output))
+            
+            # 如果被打断，直接返回
+            if context.interrupted:
+                context.interrupted = False
+                context.input_texts = ''
+                context.output_texts = ''
+                context.current_image = None
+                return
+
         except Exception as e:
             logger.error(f"Error processing Dify response: {str(e)}")
             error_message = f"Error: {str(e)}"
@@ -128,7 +148,9 @@ class LLMHandler(HandlerBase, ABC):
         """处理打断信号：清空输入文本缓存"""
         context = cast(DifyContext, context)
         logger.info("LLM: Interrupt received, clearing input text")
+        context.interrupted = True
         context.input_texts = ''
+        context.output_texts = ''
         context.current_image = None
 
     def destroy_context(self, context: HandlerContext):

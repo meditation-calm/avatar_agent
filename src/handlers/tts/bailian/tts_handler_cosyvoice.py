@@ -161,6 +161,11 @@ class HandlerTTS(HandlerBase, ABC):
         output_definition = output_definitions.get(ChatDataType.AVATAR_AUDIO).definition
         event_definition = output_definitions.get(ChatDataType.HUMAN_EVENT).definition
         context = cast(TTSContext, context)
+        
+        # 重置打断标志
+        if context.interrupted:
+             context.interrupted = False
+
         if inputs.type != ChatDataType.AVATAR_TEXT:
             return
 
@@ -195,6 +200,16 @@ class HandlerTTS(HandlerBase, ABC):
                 context.ignore_text = True
 
         try:
+            # 检查是否被打断
+            if context.interrupted:
+                logger.info("Bailian TTS: Interrupted before processing text, skipping")
+                context.interrupted = False
+                context.input_text = ''
+                if context.synthesizer is not None:
+                     context.synthesizer.streaming_complete()
+                     context.synthesizer = None
+                return
+
             if not text_end:
                 context.input_text = context.input_text + text
                 if context.synthesizer is None:
@@ -218,16 +233,18 @@ class HandlerTTS(HandlerBase, ABC):
                 context.synthesizer.streaming_call(text)
             else:
                 logger.info(f'bailian cosyvoice streaming_call last {text}')
-                context.synthesizer.streaming_call(text)
-                context.synthesizer.streaming_complete()
-                context.synthesizer = None
+                if context.synthesizer:
+                    context.synthesizer.streaming_call(text)
+                    context.synthesizer.streaming_complete()
+                    context.synthesizer = None
                 context.synthesizer_idx = context.synthesizer_idx + 1
                 context.input_text = ''
                 context.ignore_text = False
         except Exception as e:
             logger.error(e)
-            context.synthesizer.streaming_complete()
-            context.synthesizer = None
+            if context.synthesizer:
+                context.synthesizer.streaming_complete()
+                context.synthesizer = None
             context.ignore_text = False
             context.shared_states.enable_vad = True
 
@@ -235,8 +252,14 @@ class HandlerTTS(HandlerBase, ABC):
         """处理打断信号：停止 TTS 合成，清空输入文本"""
         context = cast(TTSContext, context)
         logger.info("TTS: Interrupt received, stopping synthesis")
+        context.interrupted = True
         if context.synthesizer is not None:
             try:
+                # 尝试强制取消而不是正常完成？Dashscope SDK 好像没有 cancel 方法，
+                # 但 streaming_complete 可能会等待剩余数据发送。
+                # 如果有 streaming_cancel 之类的方法更好，如果没有，只能 complete。
+                # 实际上 Dashscope SDK 的 streaming_call 是同步还是异步？如果是同步调用，这里可能阻塞。
+                # 根据文档 streaming_call 发送文本，on_data 回调接收音频。
                 context.synthesizer.streaming_complete()
             except Exception as e:
                 logger.error(f"Error stopping synthesizer: {e}")

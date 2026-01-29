@@ -21,3 +21,4 @@ class DifyContext(HandlerContext):
         self.output_texts = ""
         self.current_image = None
         self.conversation_id = None
+        self.interrupted = False
