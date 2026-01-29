@@ -172,6 +172,7 @@ class VADHandler(HandlerBase, ABC):
 
         context.slice_context.update_start_id(timestamp[0], force_update=False)
 
+        current_enable_vad = context.shared_states.enable_vad
         """ 对音频数据进行切片处理 """
         for clip in slice_data(context.slice_context, audio):
             head_sample_id = context.slice_context.get_last_slice_start_index()
@@ -190,7 +191,8 @@ class VADHandler(HandlerBase, ABC):
             """
             if human_speech_end:
                 if context.shared_states.enable_vad:
-                    context.shared_states.enable_vad = False
+                    # context.shared_states.enable_vad = False
+                    current_enable_vad = False
                 context.is_started = False
                 context.reset()
                 event = DataBundle(event_definition)
@@ -210,6 +212,7 @@ class VADHandler(HandlerBase, ABC):
                 if timestamp >= 0:
                     output_chat_data.timestamp = timestamp, sample_rate
                 context.submit_data(output_chat_data)
+        context.shared_states.enable_vad = current_enable_vad
 
     def destroy_context(self, context: HandlerContext):
         pass
