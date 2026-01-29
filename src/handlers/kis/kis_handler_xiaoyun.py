@@ -128,7 +128,7 @@ class KISHandler(HandlerBase, ABC):
             return
         
         # 如果已经在等待前端确认，跳过处理
-        if context.interrupt_pending:
+        if context.shared_states.enable_vad:
             return
         
         # 收集音频数据
@@ -176,10 +176,10 @@ class KISHandler(HandlerBase, ABC):
                             # 检测到打断关键词（Xiaoyun 不返回具体关键词，只要检测到就触发）
                             interrupt_keyword = context.config.interrupt_keywords[0] if context.config.interrupt_keywords else "小云小云"
                             logger.info(f"KIS Xiaoyun interrupt keyword detected: {interrupt_keyword} (confidence: {confidence})")
-                            context.interrupt_keyword_detected = True
-                            context.interrupt_pending = True
                             request_id = uuid4().hex
                             context.pending_request_id = request_id
+
+                            
                             
                             # 1. 立即触发后端打断（Phase 1），停止 LLM/TTS 生成
                             logger.info(f"KIS Xiaoyun: Immediate interrupt trigger (Phase 1)")
@@ -201,39 +201,6 @@ class KISHandler(HandlerBase, ABC):
         except Exception as e:
             logger.error(f"KIS Xiaoyun detection error: {e}")
 
-    def interrupt(self, context: HandlerContext):
-        """
-        处理打断确认，触发后端各个 handler 的打断
-        这个方法会在前端确认打断后，由 ChatSession 调用
-        """
-        context = cast(KISContext, context)
-        if not context.interrupt_keyword_detected:
-            return
-        
-        logger.info("KIS Xiaoyun: Interrupt confirmed (Phase 2), triggering backend handlers again")
-        
-        # 1. 再次触发后端打断（Phase 2），确保清理在等待期间产生的残余数据
-        self._send_interrupt_signal(context)
-        
-        # 2. 发送打断完成事件给前端（可选，视前端需求而定）
-        event_definition = DataBundleDefinition()
-        event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
-        event = DataBundle(event_definition)
-        event.set_main_data({
-            "handler": "kis",
-            "event": "interrupt_confirmed"
-        })
-        context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
-        
-        # 3. 最后重置状态并启用 VAD，确保在新一轮对话开始前环境是干净的
-        context.interrupt_pending = False
-        context.interrupt_keyword_detected = False
-        context.pending_request_id = None
-        context.output_audios.clear()
-        
-        if context.shared_states:
-            context.shared_states.enable_vad = True
-            logger.info("KIS Xiaoyun: VAD re-enabled")
 
     def _send_interrupt_signal(self, context: KISContext):
         """发送系统级打断信号"""

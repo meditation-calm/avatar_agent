@@ -29,7 +29,6 @@ class KISContext(HandlerContext):
         self.output_audios = []
         self.shared_states = None
         self.interrupt_pending = False  # 是否等待前端确认打断
-        self.interrupt_keyword_detected = False  # 是否检测到打断关键词
         self.pending_request_id: Optional[str] = None  # 当前等待确认的请求ID（可选）
 
 
