@@ -23,3 +23,4 @@ class LLMContext(HandlerContext):
         self.input_texts = ""
         self.output_texts = ""
         self.history = None
+        self.interrupted = False

@@ -46,3 +46,5 @@ class TTSContext(HandlerContext):
 
         self.task_queue: deque[HandlerTask] = deque()
         self.task_consumer_thread = None
+        self.interrupted = False
+

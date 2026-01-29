@@ -14,6 +14,8 @@ from src.chat_engine.contexts.session_context import SessionContext
 from src.chat_engine.data_models.chat_data.chat_data_model import ChatData
 from src.chat_engine.data_models.chat_data_type import ChatDataType
 from src.chat_engine.data_models.chat_engine_config_data import ChatEngineConfigModel
+from src.chat_engine.data_models.chat_signal import ChatSignal
+from src.chat_engine.data_models.chat_signal_type import ChatSignalType, ChatSignalSourceType
 from src.chat_engine.data_models.runtime_data.data_bundle import DataBundleDefinition, DataBundleEntry, DataBundle
 from src.engine_utils.directory_info import DirectoryInfo
 from src.handlers.kis.kis_handler_base import KISContext
@@ -230,6 +232,22 @@ class KISHandler(HandlerBase, ABC):
         # 注意：这里需要通过 ChatSession 来发送信号，但 ChatSession 的引用需要通过其他方式获取
         # 目前通过事件通知，实际的信号发送由 ChatSession 的 emit_signal 方法处理
         logger.info("KIS Xiaoyun: Backend handlers will be interrupted by ChatSession")
+
+        # FIX: 主动触发 ChatSession 的打断信号
+        if self.engine:
+            engine = self.engine()
+            if engine and context.session_id in engine.sessions:
+                session = engine.sessions[context.session_id]
+                signal = ChatSignal(
+                    type=ChatSignalType.INTERRUPT,
+                    source_type=ChatSignalSourceType.HANDLER,
+                    source_name="kis"
+                )
+                session.emit_signal(signal)
+            else:
+                logger.warning(f"Could not find session {context.session_id} to emit interrupt signal")
+        else:
+            logger.warning("Engine reference is missing in KISHandler")
 
     def destroy_context(self, context: HandlerContext):
         pass

@@ -80,6 +80,11 @@ class LLMHandler(HandlerBase, ABC):
                output_definitions: Dict[ChatDataType, HandlerDataInfo]):
         output_definition = output_definitions.get(ChatDataType.AVATAR_TEXT).definition
         context = cast(LLMContext, context)
+                
+        # 重置打断标志
+        if context.interrupted:
+            context.interrupted = False
+
         if inputs.type != ChatDataType.HUMAN_TEXT:
             return
         speech_id = inputs.data.get_meta("speech_id", context.session_id)
@@ -107,6 +112,11 @@ class LLMHandler(HandlerBase, ABC):
                 stream_options={"include_usage": True}
             )
             for chunk in completion:
+                # 检查是否被打断
+                if context.interrupted:
+                    logger.info(f"LLM OpenAI interrupted during generation for speech_id: {speech_id}")
+                    break
+
                 if chunk and chunk.choices and chunk.choices[0] and chunk.choices[0].delta.content:
                     """ 持续输出llm响应数据 """
                     output_text = chunk.choices[0].delta.content
@@ -117,6 +127,17 @@ class LLMHandler(HandlerBase, ABC):
                     output.add_meta("avatar_text_end", False)
                     output.add_meta("speech_id", speech_id)
                     yield output
+            
+            # 如果被打断，直接返回，不再记录历史也不发送结束标志（或者发送一个带结束标志的空包？）
+            # 通常打断意味着放弃当前回复，所以不记录历史比较合理？
+            # 但为了保持协议完整性，可能还是需要发送一个 end 包，或者由下位机处理断流。
+            # 这里选择如果打断，就不记录到历史，并且结束 yield。
+            if context.interrupted:
+                context.interrupted = False
+                context.input_texts = ''
+                context.output_texts = ''
+                return
+
             logger.info(f'llm openai output {context.config.model_name} {chat_text} {context.output_texts} ')
             context.history.add_message(HistoryMessage(role="human", content=chat_text))
             context.history.add_message(HistoryMessage(role="avatar", content=context.output_texts))
@@ -140,6 +161,16 @@ class LLMHandler(HandlerBase, ABC):
         end_output.add_meta("avatar_text_end", True)
         end_output.add_meta("speech_id", speech_id)
         yield end_output
+
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号"""
+        context = cast(LLMContext, context)
+        logger.info("LLM OpenAI: Interrupt received")
+        context.interrupted = True
+        context.input_texts = ''
+        # context.output_texts = '' # 也许保留用于调试，或者清空？清空比较安全。
+        context.output_texts = ''
+
 
     def destroy_context(self, context: HandlerContext):
         pass

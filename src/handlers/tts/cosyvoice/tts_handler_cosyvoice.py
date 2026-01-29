@@ -125,14 +125,32 @@ class TTSHandler(HandlerBase, ABC):
                 if len(task_inner_queue) == 0:
                     time.sleep(0.03)
                     continue
+                
+                # 检查是否被打断，如果被打断，清空队列并重置标志
+                if context.interrupted:
+                    logger.info("TTS CosyVoice task consumer: clearing task queue due to interrupt")
+                    task_inner_queue.clear()
+                    context.interrupted = False
+                    continue
+
                 task = task_inner_queue[0]
                 task = cast(HandlerTask, task)
                 if task is None:
                     break
                 logger.debug(f'get task audio {len(task_inner_queue), task.result_queue.qsize()}')
                 try:
+                    # 如果被打断，直接跳过当前任务
+                    if context.interrupted:
+                        task_inner_queue.popleft()
+                        continue
+                        
                     audio = task.result_queue.get(timeout=1)
                     if audio is not None:
+                        # 再次检查，防止在等待期间被打断
+                        if context.interrupted:
+                             # 丢弃数据
+                            continue
+
                         output = DataBundle(output_definition)
                         output.set_main_data(audio)
                         output.add_meta("avatar_speech_end", False if not task.speech_end else True)
@@ -158,6 +176,12 @@ class TTSHandler(HandlerBase, ABC):
     def handle(self, context: HandlerContext, inputs: ChatData,
                output_definitions: Dict[ChatDataType, HandlerDataInfo]):
         context = cast(TTSContext, context)
+        
+        if context.interrupted:
+             # 如果处于打断状态，清理输入并返回
+             context.input_text = ''
+             return
+
         if inputs.type == ChatDataType.AVATAR_TEXT:
             text = inputs.data.get_main_data()
         else:
@@ -179,6 +203,8 @@ class TTSHandler(HandlerBase, ABC):
                 for sentence in complete_sentences:
                     if len(sentence.strip()) < 1:
                         continue
+                    if context.interrupted:
+                        break
                     logger.info('current sentence' + sentence)
                     task = HandlerTask(speech_id=speech_id)
                     tts_info = {
@@ -191,20 +217,39 @@ class TTSHandler(HandlerBase, ABC):
         else:
             logger.info('last sentence' + context.input_text)
             if context.input_text is not None and len(context.input_text.strip()) > 0:
-                task = HandlerTask(speech_id=speech_id)
-                tts_info = {
-                    "text": context.input_text,
-                    "key": task.id,
-                    "session_id": context.session_id
-                }
-                self.tts_input_queue.put(tts_info)
-                context.task_queue.append(task)
+                if not context.interrupted:
+                    task = HandlerTask(speech_id=speech_id)
+                    tts_info = {
+                        "text": context.input_text,
+                        "key": task.id,
+                        "session_id": context.session_id
+                    }
+                    self.tts_input_queue.put(tts_info)
+                    context.task_queue.append(task)
             context.input_text = ''
-            end_task = HandlerTask(speech_id=speech_id, speech_end=True)
-            end_task.result_queue.put(np.zeros(shape=(1, 240), dtype=np.float32))
-            end_task.result_queue.put(None)
-            logger.info(f"speech end {end_task}")
-            context.task_queue.append(end_task)
+            if not context.interrupted:
+                end_task = HandlerTask(speech_id=speech_id, speech_end=True)
+                end_task.result_queue.put(np.zeros(shape=(1, 240), dtype=np.float32))
+                end_task.result_queue.put(None)
+                logger.info(f"speech end {end_task}")
+                context.task_queue.append(end_task)
+    
+    def interrupt(self, context: HandlerContext):
+        """处理打断信号"""
+        context = cast(TTSContext, context)
+        logger.info("TTS CosyVoice: Interrupt received")
+        context.interrupted = True
+        context.input_text = ''
+        context.task_queue.clear()
+        # 注意：这里我们无法撤回已经发送给子进程的任务，
+        # 但我们清空了 task_queue，所以 consumer 即使收到子进程的结果也会因为找不到对应的 task 而丢弃吗？
+        # 看 consumer 的实现：taskDeque = task_queue_map.get(session_id); for task in taskDeque: if task.id == key...
+        # 如果 task_queue 被清空了，consumer 就找不到对应的 task，自然就不会 put 到 result_queue。
+        # 这样是安全的。
+        
+        # 重新启用 VAD (参考 Bailian TTS 的实现，也许需要？)
+        # if context.shared_states:
+        #     context.shared_states.enable_vad = True
 
     def destroy_context(self, context: HandlerContext):
         context = cast(TTSContext, context)
