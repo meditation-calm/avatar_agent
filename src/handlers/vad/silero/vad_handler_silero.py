@@ -211,6 +211,7 @@ class VADHandler(HandlerBase, ABC):
                 )
                 if timestamp >= 0:
                     output_chat_data.timestamp = timestamp, sample_rate
+                logger.info(f"VAD: enable_vad {context.shared_states.enable_vad}, current_enable_vad: {current_enable_vad}")
                 context.submit_data(output_chat_data)
         context.shared_states.enable_vad = current_enable_vad
 
