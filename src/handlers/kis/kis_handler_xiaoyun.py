@@ -136,25 +136,12 @@ class KISHandler(HandlerBase, ABC):
         if audio is not None:
             audio = audio.squeeze()
             context.output_audios.append(audio)
-        
-        # 检查是否有足够的音频进行检测（至少1秒）
-        if len(context.output_audios) == 0:
+        speech_end = inputs.data.get_meta("human_speech_end", False)
+        if not speech_end:
             return
         
-        # 计算总音频长度（样本数）
-        total_samples = sum(len(audio) for audio in context.output_audios)
-        if total_samples < context.sample_rate:  # 16kHz 下，1秒 = 16000 个样本
-            return
-        
-        # 合并音频进行关键词检测
         output_audio = np.concatenate(context.output_audios)
         context.output_audios.clear()
-        
-        # 准备音频数据
-        if output_audio.dtype != np.float32:
-            output_audio = output_audio.astype(np.float32)
-        if output_audio.max() > 1.0:
-            output_audio = output_audio / 32768.0
         
         # 执行关键词检测（Xiaoyun 方式）
         try:
@@ -201,6 +188,8 @@ class KISHandler(HandlerBase, ABC):
         except Exception as e:
             logger.error(f"KIS Xiaoyun detection error: {e}")
 
+    def interrupt(self, context: HandlerContext):
+        context.output_audios.clear()
 
     def _send_interrupt_signal(self, context: KISContext):
         """发送系统级打断信号"""

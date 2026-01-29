@@ -148,37 +148,6 @@ class VADHandler(HandlerBase, ABC):
         
         if inputs.type != ChatDataType.MIC_AUDIO:
             return
-        
-        """ 检查是否启用 VAD，未启用时输出 INTERRUPT_AUDIO 给 KIS """
-        if not context.shared_states.enable_vad:
-            """ 在数字人回复期间，将音频数据传递给 KIS 进行打断检测 """
-            audio = inputs.data.get_main_data()
-            if audio is None:
-                return
-            
-            audio_entry = inputs.data.get_main_definition_entry()
-            sample_rate = audio_entry.sample_rate
-            audio = audio.squeeze()
-            
-            timestamp = None
-            if inputs.is_timestamp_valid():
-                timestamp = inputs.timestamp
-            
-            if audio.dtype != np.float32:
-                audio = audio.astype(np.float32) / 32767
-            
-            """ 输出 INTERRUPT_AUDIO 给 KIS handler """
-            if interrupt_output_definition is not None:
-                interrupt_output = DataBundle(interrupt_output_definition)
-                interrupt_output.set_main_data(np.expand_dims(audio, axis=0))
-                interrupt_chat_data = ChatData(
-                    type=ChatDataType.INTERRUPT_AUDIO,
-                    data=interrupt_output
-                )
-                if timestamp is not None and timestamp[0] >= 0:
-                    interrupt_chat_data.timestamp = timestamp
-                context.submit_data(interrupt_chat_data)
-            return
 
         """ 提取音频数据并进行预处理 """
         audio = inputs.data.get_main_data()
@@ -220,7 +189,8 @@ class VADHandler(HandlerBase, ABC):
                 如果有音频片段输出，则构造 ChatData 对象并生成输出 
             """
             if human_speech_end:
-                context.shared_states.enable_vad = False
+                if context.shared_states.enable_vad:
+                    context.shared_states.enable_vad = False
                 context.is_started = False
                 context.reset()
                 event = DataBundle(event_definition)
@@ -232,8 +202,9 @@ class VADHandler(HandlerBase, ABC):
                 for flag_name, flag_value in extra_args.items():
                     output.add_meta(flag_name, flag_value)
                 output.add_meta("speech_id", speech_id)
+                chat_data_type = ChatDataType.HUMAN_AUDIO if context.shared_states.enable_vad else ChatDataType.INTERRUPT_AUDIO
                 output_chat_data = ChatData(
-                    type=ChatDataType.HUMAN_AUDIO,
+                    type=chat_data_type,
                     data=output
                 )
                 if timestamp >= 0:
