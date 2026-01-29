@@ -181,7 +181,11 @@ class KISHandler(HandlerBase, ABC):
                             request_id = uuid4().hex
                             context.pending_request_id = request_id
                             
-                            # 发送打断信号给前端
+                            # 1. 立即触发后端打断（Phase 1），停止 LLM/TTS 生成
+                            logger.info(f"KIS Xiaoyun: Immediate interrupt trigger (Phase 1)")
+                            self._send_interrupt_signal(context)
+
+                            # 2. 发送打断信号给前端
                             payload = {
                                 "handler": "kis",
                                 "event": "interrupt_request",
@@ -206,19 +210,12 @@ class KISHandler(HandlerBase, ABC):
         if not context.interrupt_keyword_detected:
             return
         
-        logger.info("KIS Xiaoyun: Interrupt confirmed, triggering backend handlers")
+        logger.info("KIS Xiaoyun: Interrupt confirmed (Phase 2), triggering backend handlers again")
         
-        # 重置状态
-        context.interrupt_pending = False
-        context.interrupt_keyword_detected = False
-        context.pending_request_id = None
-        context.output_audios.clear()
+        # 1. 再次触发后端打断（Phase 2），确保清理在等待期间产生的残余数据
+        self._send_interrupt_signal(context)
         
-        # 重新启用 VAD
-        if context.shared_states:
-            context.shared_states.enable_vad = True
-        
-        # 发送打断完成事件
+        # 2. 发送打断完成事件给前端（可选，视前端需求而定）
         event_definition = DataBundleDefinition()
         event_definition.add_entry(DataBundleEntry.create_text_entry("human_event"))
         event = DataBundle(event_definition)
@@ -228,12 +225,18 @@ class KISHandler(HandlerBase, ABC):
         })
         context.submit_data(ChatData(type=ChatDataType.HUMAN_EVENT, data=event))
         
-        # 通过 session_context 发送打断信号，触发其他 handler 的打断
-        # 注意：这里需要通过 ChatSession 来发送信号，但 ChatSession 的引用需要通过其他方式获取
-        # 目前通过事件通知，实际的信号发送由 ChatSession 的 emit_signal 方法处理
-        logger.info("KIS Xiaoyun: Backend handlers will be interrupted by ChatSession")
+        # 3. 最后重置状态并启用 VAD，确保在新一轮对话开始前环境是干净的
+        context.interrupt_pending = False
+        context.interrupt_keyword_detected = False
+        context.pending_request_id = None
+        context.output_audios.clear()
+        
+        if context.shared_states:
+            context.shared_states.enable_vad = True
+            logger.info("KIS Xiaoyun: VAD re-enabled")
 
-        # FIX: 主动触发 ChatSession 的打断信号
+    def _send_interrupt_signal(self, context: KISContext):
+        """发送系统级打断信号"""
         if self.engine:
             engine = self.engine()
             if engine and context.session_id in engine.sessions:
@@ -244,6 +247,7 @@ class KISHandler(HandlerBase, ABC):
                     source_name="kis"
                 )
                 session.emit_signal(signal)
+                logger.info(f"KIS Xiaoyun: Interrupt signal emitted for session {context.session_id}")
             else:
                 logger.warning(f"Could not find session {context.session_id} to emit interrupt signal")
         else:
