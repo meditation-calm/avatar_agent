@@ -272,5 +272,15 @@ class ClientHandlerRtc(ClientHandlerBase):
         if data_queue is not None:
             data_queue.put_nowait(inputs)
 
+    def interrupt(self, context: HandlerContext):
+        """
+        处理打断信号：
+            清空客户端会话委托的输出队列中的所有数据
+        """
+        context = cast(ClientRtcContext, context)
+        if context.client_session_delegate is not None:
+            context.client_session_delegate.clear_data()
+            logger.info(f"RTC client handler interrupt")
+
     def destroy_context(self, context: HandlerContext):
         pass
