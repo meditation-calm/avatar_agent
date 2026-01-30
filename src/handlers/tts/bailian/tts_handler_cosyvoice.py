@@ -53,11 +53,15 @@ class CosyvoiceCallBack(ResultCallback):
 
     def sendAudioData(self, output_audio: np.ndarray = None, avatar_speech_end: bool = False):
         if output_audio is not None:
-            output = DataBundle(self.output_definition)
-            output.set_main_data(output_audio)
-            output.add_meta("avatar_speech_end", avatar_speech_end)
-            output.add_meta("speech_id", self.speech_id)
-            self.context.submit_data(ChatData(type=ChatDataType.AVATAR_AUDIO, data=output))
+            logger.info(f"bailian cosyvoice sendAudioData {output_audio.shape}")
+            try:
+                output = DataBundle(self.output_definition)
+                output.set_main_data(output_audio)
+                output.add_meta("avatar_speech_end", avatar_speech_end)
+                output.add_meta("speech_id", self.speech_id)
+                self.context.submit_data(ChatData(type=ChatDataType.AVATAR_AUDIO, data=output))
+            except Exception as e:
+                logger.error(f"bailian cosyvoice sendAudioData error {e}")
 
     def sendEventData(self, event_data: Dict[str, str] = None):
         if event_data is not None:
